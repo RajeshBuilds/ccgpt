@@ -10,9 +10,9 @@ const bedrock = createAmazonBedrock({
 
 export const myProvider = customProvider({
   languageModels: {
-    'chat-model': openai('gpt-4o'),
+    'chat-model': bedrock('us.anthropic.claude-sonnet-4-20250514-v1:0'),
     'chat-model-reasoning': wrapLanguageModel({
-      model: openai('o3-mini'),
+      model: bedrock('us.anthropic.claude-sonnet-4-20250514-v1:0'),
       middleware: extractReasoningMiddleware({ tagName: 'think' }),
     }),
     'complaint-assistant-model': openai('gpt-4o'),
