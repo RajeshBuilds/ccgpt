@@ -16,7 +16,7 @@ export default function Header() {
               <div className="bg-black dark:bg-white p-2 rounded-lg">
                 <Landmark className="h-5 w-5 text-white dark:text-black" />
               </div>
-              <span className="font-bold">XYZ Bank</span>
+              <span className="font-bold">Citi Wealth</span>
               <span className="font-normal"> | Customer Support</span>
             </a>
           </div>

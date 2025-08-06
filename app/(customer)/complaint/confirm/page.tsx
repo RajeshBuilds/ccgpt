@@ -19,7 +19,7 @@ export default function ComplaintConfirmPage() {
     transactionAmount: 500.00,
     productDetails: "Online Banking Transfer",
     deviceDetails: "iPhone 15 Pro, iOS 17.2",
-    appDetails: "XYZ Bank Mobile App v3.2.1",
+    appDetails: "Citi Wealth Support v3.2.1",
     browserDetails: "Safari 17.2 on macOS",
     attachmentUrls: "screenshot1.png,screenshot2.png,error_log.txt",
     branchDetails: "Downtown Branch - 123 Main Street",

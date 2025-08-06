@@ -486,3 +486,15 @@ export async function findEmployeeByCategory({ category }: { category: string })
     throw new ChatSDKError('bad_request:database', 'Failed to find employee');
   }
 }
+
+// Get all complaints assigned to a specific employee
+export async function getComplaintsAssignedToEmployee(employeeId: number) {
+  try {
+    return await db
+      .select()
+      .from(complaint)
+      .where(eq(complaint.assignedTo, employeeId));
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get assigned complaints');
+  }
+}
