@@ -39,6 +39,7 @@ export function Chat({
   const { setDataStream } = useDataStream();
 
   const [input, setInput] = useState<string>('');
+  const isEmployeeLogin = session.user.type === 'employee';
 
   const {
     messages,
@@ -54,7 +55,7 @@ export function Chat({
     experimental_throttle: 100,
     generateId: generateUUID,
     transport: new DefaultChatTransport({
-      api: '/api/chat',
+      api: isEmployeeLogin? '/api/resolverchat' : '/api/chat',
       fetch: fetchWithErrorHandlers,
       prepareSendMessagesRequest({ messages, id, body }) {
         return {
@@ -96,7 +97,7 @@ export function Chat({
 
   return (
     <>
-      <div className="flex flex-col min-w-0 h-full bg-background">
+      <div className="flex flex-col min-w-0 h-full ">
         <Messages
           chatId={id}
           status={status}
@@ -108,7 +109,7 @@ export function Chat({
           session={session}
         />
 
-        <form className="flex mx-auto px-4 bg-background pb-4 md:pb-6 gap-2 w-full md:max-w-3xl shrink-0">
+        <form className="flex mx-auto px-4 pb-4 md:pb-6 gap-2 w-full md:max-w-3xl shrink-0">
           {!isReadonly && (
             <MultimodalInput
               chatId={id}

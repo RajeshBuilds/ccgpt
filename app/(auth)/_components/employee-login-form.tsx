@@ -47,7 +47,8 @@ export function EmployeeLoginForm({
       } else {
         toast.success('Signed in successfully');
         const chatId = generateUUID();
-        router.push(`/employee/dashboard?chatId=${chatId}`);
+        sessionStorage.setItem('employee_chat_id', chatId);
+        router.push(`/employee/dashboard`);
       }
     } catch (error) {
       console.error(error);

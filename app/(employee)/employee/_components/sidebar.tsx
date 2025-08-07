@@ -22,7 +22,13 @@ import { NavUser } from "@/app/(customer)/_components/sidebar/nav-user";
 
 export function SidebarEmployee(props: React.ComponentProps<typeof Sidebar> & { onToggleAssistant?: () => void; assistantOpen?: boolean }) {
   const { data: session } = useSession();
-  const user = session?.user;
+  const [chatId, setChatId] = React.useState<string | null>(null);
+ 
+   React.useEffect(() => {
+     if (typeof window !== 'undefined') {
+       setChatId(sessionStorage.getItem('employee_chat_id'));
+     }
+   }, []);
   const { onToggleAssistant, assistantOpen, ...sidebarProps } = props;
 
   return (
@@ -64,7 +70,7 @@ export function SidebarEmployee(props: React.ComponentProps<typeof Sidebar> & { 
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Resolution assistant">
-                <Link href="/employee/chat">
+                <Link href={chatId ? `/employee/workspace/${chatId}` : "/employee/workspace/"}>
                   <MessageCircle className="mr-2 size-4" /> Resolution assistant
                 </Link>
               </SidebarMenuButton>

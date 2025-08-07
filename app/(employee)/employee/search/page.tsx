@@ -1,7 +1,8 @@
 'use client';
 
 import { useSession } from "next-auth/react";
-import { TicketSearch } from "@/components/ticket-search";
+import { TicketSearch } from "../_components/ticket-search";
+
 
 export default function EmployeeSearchPage() {
   const { data: session } = useSession();

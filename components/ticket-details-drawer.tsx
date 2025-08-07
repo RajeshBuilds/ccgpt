@@ -6,24 +6,26 @@ type TicketDetailsDrawerProps = {
   ticket: any;
   open: boolean;
   onClose: () => void;
-  onAssign?: () => void;
-  isAssignedToUser?: boolean;
-  assigning?: boolean;
+  onAssign: () => void;
+  isAssignedToUser: boolean;
+  assigning: boolean;
   userId?: string | number;
   onChange: (ticket: any) => void;
   onStatusChange: (status: string) => void;
+  onSave: (ticket: any) => void;
 };
 
 export function TicketDetailsDrawer({
   ticket,
   open,
   onClose,
-  onAssign = () => {},
-  isAssignedToUser = false,
-  assigning = false,
+  onAssign,
+  isAssignedToUser,
+  assigning,
   userId,
   onChange,
   onStatusChange,
+  onSave,
 }: TicketDetailsDrawerProps) {
   if (!ticket) return null;
   return (
@@ -35,35 +37,38 @@ export function TicketDetailsDrawer({
         <div className="text-lg font-bold">Ticket Details</div>
         <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-xl">×</button>
       </div>
-      <div className="p-6 flex flex-col gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Reference</label>
-          <input className="w-full px-3 py-2 border rounded" value={ticket.referenceNumber} readOnly />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Subject</label>
-          <input className="w-full px-3 py-2 border rounded" value={ticket.subject} readOnly />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Category</label>
-          <input className="w-full px-3 py-2 border rounded" value={ticket.category} readOnly />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Status</label>
-          <select className="w-full px-3 py-2 border rounded" value={ticket.status} onChange={e => onStatusChange(e.target.value)}>
-            <option value="Open">Open</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Closed">Closed</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Description</label>
-          <textarea className="w-full px-3 py-2 border rounded" value={ticket.description} onChange={e => onChange({ ...ticket, description: e.target.value })} rows={4} />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Criticality</label>
-          <input className="w-full px-3 py-2 border rounded" value={ticket.criticality} readOnly />
-        </div>
+      <div className="p-6 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
+        {Object.entries(ticket).map(([key, value]) => (
+          <div key={key}>
+            <label className="block text-sm font-medium mb-1">{key.charAt(0).toUpperCase() + key.slice(1)}</label>
+            {key === 'status' ? (
+              <select
+                className="w-full px-3 py-2 border rounded"
+                value={typeof value === 'string' || typeof value === 'number' ? value : ''}
+                onChange={e => onStatusChange(e.target.value)}
+              >
+                <option value="">Select status</option>
+                <option value="Open">Open</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Closed">Closed</option>
+              </select>
+            ) : key === 'description' ? (
+              <textarea
+                className="w-full px-3 py-2 border rounded"
+                value={typeof value === 'string' || typeof value === 'number' ? value : ''}
+                onChange={e => onChange({ ...ticket, [key]: e.target.value })}
+                rows={4}
+              />
+            ) : (
+              <input
+                className="w-full px-3 py-2 border rounded"
+                value={typeof value === 'string' || typeof value === 'number' ? value : ''}
+                readOnly={key === 'id' || key === 'referenceNumber' || key === 'createdAt' || key === 'resolvedAt'}
+                onChange={e => onChange({ ...ticket, [key]: e.target.value })}
+              />
+            )}
+          </div>
+        ))}
         <div className="flex items-center mt-4 justify-between gap-2">
           <div className="flex items-center gap-2">
             <div className="text-sm text-gray-600">Assigned To: {ticket.assignedTo ? ticket.assignedTo : "Unassigned"}</div>
@@ -73,7 +78,7 @@ export function TicketDetailsDrawer({
               </Button>
             )}
           </div>
-          <Button type="button" variant="default" onClick={() => onChange(ticket)}>
+          <Button type="button" variant="default" onClick={() => onSave(ticket)}>
             Save Changes
           </Button>
         </div>

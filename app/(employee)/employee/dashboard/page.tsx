@@ -1,16 +1,23 @@
 "use client";
 
+import { auth } from "@/app/(auth)/auth";
 import { EmployeeTicketList } from "../_components/employee-ticket-list";
-// import { TicketTable } from "../_components/ticket-table";
-// import { useEffect, useState } from "react";
-import Header from "@/components/shared/header";
-import { useRouter, useSearchParams } from "next/navigation";
+
+import { redirect, useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import React from "react";
+import { useSession } from "next-auth/react";
 
 export default function EmployeeDashboardPage() {
   const searchParams = useSearchParams();
   const showTickets = searchParams.get("view") === "tickets";
+  const [chatId, setChatId] = React.useState<string | null>(null);
 
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setChatId(sessionStorage.getItem('employee_chat_id'));
+    }
+  }, []);
 
   return (
     <div className="flex min-h-svh w-full">
@@ -28,7 +35,14 @@ export default function EmployeeDashboardPage() {
           <>
             <h1 className="text-4xl font-bold mb-8 mt-4 text-center">Welcome to Citi Wealth Support Portal</h1>
             <p className="text-lg text-muted-foreground mb-8 text-center">Welcome !!</p>
-            {/* TicketTable removed as requested */}
+            <div className="flex justify-center mt-8">
+              <a
+                href={chatId ? `/employee/workspace/${chatId}` : '#'}
+                className="inline-block px-6 py-3 bg-black text-white rounded-lg shadow hover:bg-zinc-800 transition-colors font-medium text-base"
+              >
+                Open Resolution Assistant
+              </a>
+            </div>
           </>
         )}
       </main>

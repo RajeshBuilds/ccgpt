@@ -424,6 +424,23 @@ export async function getComplaintById(id: string) {
   }
 }
 
+export async function getComplaintByReferenceNum(reference_num: string) {
+  try {
+    const result = await db
+      .select()
+      .from(complaint)
+      .where(eq(complaint.referenceNumber, reference_num))
+      .limit(1);
+
+    return result[0] || null;
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to get complaint by id',
+    );
+  }
+}
+
 export async function submitComplaint({ id }: { id: string }) {
   try {
     return await db
@@ -439,7 +456,7 @@ export async function submitComplaint({ id }: { id: string }) {
   }
 }
 
-export async function assignComplaintToEmployee({
+export async function assignComplaintToEmployeeById({
   complaintId,
   employeeId,
 }: {
@@ -455,6 +472,27 @@ export async function assignComplaintToEmployee({
         updatedAt: new Date(),
       })
       .where(eq(complaint.id, complaintId));
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to assign complaint');
+  }
+}
+
+export async function assignComplaintToEmployeeByRef({
+  referenceNumber,
+  employeeId,
+}: {
+  referenceNumber: string;
+  employeeId: number;
+}) {
+  try {
+    return await db
+      .update(complaint)
+      .set({
+        assignedTo: employeeId,
+        status: 'assigned',
+        updatedAt: new Date(),
+      })
+      .where(eq(complaint.referenceNumber, referenceNumber));
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to assign complaint');
   }
@@ -496,5 +534,14 @@ export async function getComplaintsAssignedToEmployee(employeeId: number) {
       .where(eq(complaint.assignedTo, employeeId));
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to get assigned complaints');
+  }
+}
+
+// Get all complaints in the database
+export async function getAllComplaints() {
+  try {
+    return await db.select().from(complaint);
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get all complaints');
   }
 }

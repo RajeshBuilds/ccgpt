@@ -3,8 +3,10 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { TicketTable } from "@/components/ticket-table";
+import { TicketTable } from "./ticket-table";
 import { TicketDetailsDrawer } from "@/components/ticket-details-drawer";
+
+
 
 
 export function EmployeeTicketList() {
@@ -17,79 +19,12 @@ export function EmployeeTicketList() {
   useEffect(() => {
     async function fetchTickets() {
       setLoading(true);
-      const res = await fetch("/api/tickets");
+      const res = await fetch(`/api/tickets?employeeId=${session?.user?.id}`);
       if (res.ok) {
         const data = await res.json();
-        const assigned = (data.complaints || []).filter((t: any) => t.assignedTo === session?.user?.id);
-        if (assigned.length > 0) {
-          setTickets(assigned);
-        } else {
-          setTickets([
-            {
-              id: "TCK-1001",
-              referenceNumber: "REF-1001",
-              subject: "Account Access",
-              category: "Account",
-              status: "Open",
-              description: "Unable to login to online banking portal.",
-              criticality: "High",
-              assignedTo: session?.user?.id,
-            },
-            {
-              id: "TCK-1002",
-              referenceNumber: "REF-1002",
-              subject: "Card Issue",
-              category: "Card",
-              status: "Open",
-              description: "Credit card not working for online purchases.",
-              criticality: "Medium",
-              assignedTo: session?.user?.id,
-            },
-            {
-              id: "TCK-1003",
-              referenceNumber: "REF-1003",
-              subject: "Loan Query",
-              category: "Loan",
-              status: "Closed",
-              description: "Need information about loan prepayment.",
-              criticality: "Low",
-              assignedTo: session?.user?.id,
-            },
-          ]);
-        }
+        setTickets(data.complaints || []);
       } else {
-        setTickets([
-          {
-            id: "TCK-1001",
-            referenceNumber: "REF-1001",
-            subject: "Account Access",
-            category: "Account",
-            status: "Open",
-            description: "Unable to login to online banking portal.",
-            criticality: "High",
-            assignedTo: session?.user?.id,
-          },
-          {
-            id: "TCK-1002",
-            referenceNumber: "REF-1002",
-            subject: "Card Issue",
-            category: "Card",
-            status: "Open",
-            description: "Credit card not working for online purchases.",
-            criticality: "Medium",
-            assignedTo: session?.user?.id,
-          },
-          {
-            id: "TCK-1003",
-            referenceNumber: "REF-1003",
-            subject: "Loan Query",
-            category: "Loan",
-            status: "Closed",
-            description: "Need information about loan prepayment.",
-            criticality: "Low",
-            assignedTo: session?.user?.id,
-          },
-        ]);
+        setTickets([]);
       }
       setLoading(false);
     }
@@ -131,9 +66,15 @@ export function EmployeeTicketList() {
             userId={session?.user?.id}
             onChange={handleDrawerChange}
             onStatusChange={handleDrawerStatusChange}
-            onAssign={() => {}}
-            isAssignedToUser={true}
+            onAssign={() => {
+              if (!selectedTicket) return;
+              const updated = { ...selectedTicket, assignedTo: session?.user?.id };
+              setSelectedTicket(updated);
+              setTickets(ts => ts.map((t: any) => t.id === updated.id ? updated : t));
+            }}
+            isAssignedToUser={selectedTicket && selectedTicket.assignedTo === session?.user?.id}
             assigning={false}
+            onSave={handleDrawerChange}
           />
         </>
       )}
