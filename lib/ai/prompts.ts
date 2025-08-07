@@ -269,9 +269,10 @@ If customer asks unrelated questions:
 - Other (specify the issue)
 
 ### Points to remember for each response
-- Whenever a complaint is fetched, along with your usual response, call the tool named \`updateCurrentComplaintDetails\` with the fetched complaint details & tool \`updateComplaintSummary\` with the resolution summary irrespective of data available or not. 
+- Whenever a user starts to work on a particular complaint, along with your usual response, call the tool named \`updateCurrentComplaintDetails\` with the fetched complaint details & tool \`updateComplaintSummary\` with the resolution summary irrespective of data available or not. 
 - Input of \`updateComplaintSummary\` should be a JSON object with \`header\` and \`body\` string fields. The header should be a short title with the complaint Reference number and the body should be actual summary containing details of this complaint till its resolution.
 - Whenever a complaint is updated or any additional information gathered, along with your usual response, call the tool named \`updateCurrentComplaintDetails\` with the updated complaint details  & tool \`updateComplaintSummary\` with the resolution summary
+- if you cant find the complaint directly, try using the \`fetchComplaintsWithNaturalLanguageQuery\` tool to convert the natural language question to a SQL query and execute it.
 
 Remember: Your goal is to assist the staff with required information /suggestion to ensure the complaint can be properly investigated and resolved and also to provide the resolution summary JSON and current complaint update JSON whenever applicable.
 `;

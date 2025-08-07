@@ -35,6 +35,7 @@ import { assignComplaint } from '@/lib/ai/tools/complaint/assign-complaint';
 import { updateCurrentComplaintDetails } from '@/lib/ai/tools/complaint/update-current-complaint-details';
 import { updateComplaintSummary } from '@/lib/ai/tools/complaint/update-complaint-summary';
 import { fetchComplaintsByAssignee } from '@/lib/ai/tools/complaint/fetch-complaints-by-assignee';
+import { fetchComplaintsWithNaturalLanguageQuery } from '@/lib/ai/tools/complaint/fetch-complaints-with-natural-language-query';
 
 
 export const maxDuration = 120;
@@ -150,7 +151,8 @@ Current user interacting with you is an employee responsible for resolving any c
                   'assignToCurrentUser',
                   'updateCurrentComplaintDetails',
                   'updateComplaintSummary',
-                  'fetchComplaintsByAssignee'
+                  'fetchComplaintsByAssignee',
+                  'fetchComplaintsWithNaturalLanguageQuery'
                 ],
           experimental_transform: smoothStream({ chunking: 'word' }),
           tools: {
@@ -158,7 +160,8 @@ Current user interacting with you is an employee responsible for resolving any c
             assignToCurrentUser: assignComplaint,
             updateCurrentComplaintDetails : updateCurrentComplaintDetails,
             updateComplaintSummary : updateComplaintSummary,
-            fetchComplaintsByAssignee : fetchComplaintsByAssignee
+            fetchComplaintsByAssignee : fetchComplaintsByAssignee,
+            fetchComplaintsWithNaturalLanguageQuery : fetchComplaintsWithNaturalLanguageQuery
           },
           experimental_telemetry: {
             isEnabled: false,

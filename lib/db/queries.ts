@@ -545,3 +545,40 @@ export async function getAllComplaints() {
     throw new ChatSDKError('bad_request:database', 'Failed to get all complaints');
   }
 }
+
+// fetch data with custom query
+export async function fetchComplaintsWithQuery(query: string) {
+  try {
+    console.log('Query executed:', query);
+    const result = (await db.execute(query.trim())).rows.map(row => mapRowToComplaint(row));
+    console.log('Result:', result);
+    return result;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to fetch data with custom query');
+  }
+}
+
+function mapRowToComplaint(row: any) {
+  return {
+    id: row.id,
+    referenceNumber: row.reference_number,
+    chatId: row.chat_id,
+    customerId: row.customer_id,
+    category: row.category,
+    subCategory: row.sub_category,
+    description: row.description,
+    additionalDetails: row.additional_details,
+    attachmentUrls: row.attachment_urls,
+    desiredResolution: row.desired_resolution,
+    sentiment: row.sentiment,
+    urgencyLevel: row.urgency_level,
+    assistantNotes: row.assistant_notes,
+    assignedTo: row.assigned_to,
+    isDraft: row.is_draft,
+    status: row.status,
+    resolutionNotes: row.resolution_notes,
+    resolvedAt: row.resolved_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
