@@ -4,7 +4,8 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { TicketTable } from "./ticket-table";
-import { TicketDetailsDrawer } from "@/components/ticket-details-drawer";
+import { TicketDetailsDrawer } from "./ticket-details-drawer";
+
 
 
 

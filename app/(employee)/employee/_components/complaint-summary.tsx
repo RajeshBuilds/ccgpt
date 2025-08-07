@@ -4,14 +4,14 @@ import jsPDF from 'jspdf';
 import { toast } from 'sonner';
 import React from 'react';
 
-export interface ReadonlyTextProps {
+export interface ComplaintSummaryProps {
   content: string;
   header: string;
   className?: string;
   style?: React.CSSProperties;
 }
 
-export function ReadonlyText({ content, header, className = '', style }: ReadonlyTextProps) {
+export default function ComplaintSummary({ content, header, className = '', style }: ComplaintSummaryProps) {
   // Helper to generate PDF blob
   const generatePdfBlob = () => {
     const doc = new jsPDF();
@@ -42,10 +42,10 @@ export function ReadonlyText({ content, header, className = '', style }: Readonl
   };
 
   return (
-    <div className={`relative p-8 md:p-20 pt-16 ${className}`} style={style}>
+    <div className={`relative bg-gradient-to-br from-white via-zinc-50 to-zinc-100 dark:from-zinc-900 dark:via-zinc-950 dark:to-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-8 md:p-16 pt-20 ${className} flex flex-col`} style={style}>
       {/* Header Row */}
-      <div className="absolute top-0 left-0 w-full flex items-center justify-between px-6 py-4">
-        <span className="font-semibold text-lg text-zinc-900 dark:text-zinc-100 flex-1 text-center select-none">
+      <div className="absolute top-0 left-0 w-full flex items-center justify-between px-8 py-5 rounded-t-xl bg-white/80 dark:bg-zinc-900/80 border-b border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <span className="font-bold text-xl md:text-2xl text-zinc-900 dark:text-zinc-100 flex-1 text-center select-none tracking-tight">
           {header}
         </span>
         <div className="flex gap-2 items-center">
@@ -85,7 +85,9 @@ export function ReadonlyText({ content, header, className = '', style }: Readonl
           </button>
         </div>
       </div>
-      <div className="prose max-w-none whitespace-pre-line text-base md:text-lg mt-2">{content}</div>
+      <div className="prose max-w-none whitespace-pre-line text-base md:text-lg mt-4 text-zinc-800 dark:text-zinc-100 flex-1 min-h-0 overflow-y-auto">
+        {content}
+      </div>
     </div>
   );
 }

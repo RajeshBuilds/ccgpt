@@ -32,6 +32,9 @@ import { complaintResolverPrompt } from '@/lib/ai/prompts';
 import { generateTitleFromUserMessage } from '../../actions';
 import { fetchComplaintByRef } from '@/lib/ai/tools/complaint/fetch-complaint-by-ref';
 import { assignComplaint } from '@/lib/ai/tools/complaint/assign-complaint';
+import { updateCurrentComplaintDetails } from '@/lib/ai/tools/complaint/update-current-complaint-details';
+import { updateComplaintSummary } from '@/lib/ai/tools/complaint/update-complaint-summary';
+import { fetchComplaintsByAssignee } from '@/lib/ai/tools/complaint/fetch-complaints-by-assignee';
 
 
 export const maxDuration = 120;
@@ -126,7 +129,16 @@ export async function POST(request: Request) {
 
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
-          system: `${complaintResolverPrompt}
+          system: `
+Current user interacting with you is an employee responsible for resolving any complaints. The user details are as follows:
+- User ID: ${session.user.id}
+- User Type: ${session.user.type}
+- User Role: ${session.user.role}
+- User Name: ${session.user.name}
+- User Email: ${session.user.email}
+- User Phone: ${session.user.phone}
+
+          ${complaintResolverPrompt}
 `,
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
@@ -135,12 +147,18 @@ export async function POST(request: Request) {
               ? []
               : [
                   'getComplaintDetailsById',
-                  'assignToCurrentUser'
+                  'assignToCurrentUser',
+                  'updateCurrentComplaintDetails',
+                  'updateComplaintSummary',
+                  'fetchComplaintsByAssignee'
                 ],
           experimental_transform: smoothStream({ chunking: 'word' }),
           tools: {
             getComplaintDetailsById: fetchComplaintByRef,
-            assignToCurrentUser: assignComplaint
+            assignToCurrentUser: assignComplaint,
+            updateCurrentComplaintDetails : updateCurrentComplaintDetails,
+            updateComplaintSummary : updateComplaintSummary,
+            fetchComplaintsByAssignee : fetchComplaintsByAssignee
           },
           experimental_telemetry: {
             isEnabled: false,

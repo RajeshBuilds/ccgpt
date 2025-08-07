@@ -34,12 +34,12 @@ export function TicketTable({ tickets, onReferenceClick }: { tickets: any[], onR
   });
 
   return (
-    <div className="w-full">
-      <div className="flex gap-4 mb-4 items-center">
+    <div className="w-full max-h-full flex-1 min-h-0 max-w-full bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-xl border border-gray-200 p-6">
+      <div className="flex flex-wrap gap-4 mb-6 items-center">
         {filterFields.map(field => (
           <select
             key={field}
-            className="border rounded px-2 py-1"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary transition"
             value={filters[field] || ""}
             onChange={e => setFilters(f => ({ ...f, [field]: e.target.value }))}
           >
@@ -51,77 +51,79 @@ export function TicketTable({ tickets, onReferenceClick }: { tickets: any[], onR
         ))}
         <button
           type="button"
-          className="ml-2 px-3 py-1 border rounded text-sm bg-gray-50 hover:bg-gray-100"
+          className="ml-2 px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 border border-gray-300 transition"
           onClick={handleResetFilters}
         >
           Reset Filters
         </button>
       </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border border-gray-200 rounded-lg">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="px-4 py-2 border-b text-left">Reference</th>
-              <th className="px-4 py-2 border-b text-left">ID</th>
-              <th className="px-4 py-2 border-b text-left">Chat ID</th>
-              <th className="px-4 py-2 border-b text-left">Customer ID</th>
-              <th className="px-4 py-2 border-b text-left">Category</th>
-              <th className="px-4 py-2 border-b text-left">SubCategory</th>
-              <th className="px-4 py-2 border-b text-left">Description</th>
-              <th className="px-4 py-2 border-b text-left">Additional Details</th>
-              <th className="px-4 py-2 border-b text-left">Attachment URLs</th>
-              <th className="px-4 py-2 border-b text-left">Desired Resolution</th>
-              <th className="px-4 py-2 border-b text-left">Sentiment</th>
-              <th className="px-4 py-2 border-b text-left">Urgency Level</th>
-              <th className="px-4 py-2 border-b text-left">Assistant Notes</th>
-              <th className="px-4 py-2 border-b text-left">Assigned To</th>
-              <th className="px-4 py-2 border-b text-left">Is Draft</th>
-              <th className="px-4 py-2 border-b text-left">Status</th>
-              <th className="px-4 py-2 border-b text-left">Resolution Notes</th>
-              <th className="px-4 py-2 border-b text-left">Resolved At</th>
-              <th className="px-4 py-2 border-b text-left">Created At</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredTickets.length === 0 ? (
+      <div className="max-w-full h-full">
+        <div className="max-w-full rounded-xl border border-gray-200 shadow h-full min-h-0 flex flex-col overflow-x-auto">
+          <table className=" max-h-full bg-white">
+            <thead className="bg-gray-100 sticky top-0 z-10">
               <tr>
-                <td colSpan={19} className="text-center py-4 text-gray-500">No tickets found.</td>
+                <th className="px-4 py-3 border-b text-left font-semibold whitespace-nowrap">Reference</th>
+                <th className="px-4 py-3 border-b text-left font-semibold whitespace-nowrap">ID</th>
+                <th className="px-4 py-3 border-b text-left font-semibold whitespace-nowrap">Chat ID</th>
+                <th className="px-4 py-3 border-b text-left font-semibold whitespace-nowrap">Customer ID</th>
+                <th className="px-4 py-3 border-b text-left font-semibold whitespace-nowrap">Category</th>
+                <th className="px-4 py-3 border-b text-left font-semibold whitespace-nowrap">SubCategory</th>
+                <th className="px-4 py-3 border-b text-left font-semibold whitespace-nowrap">Description</th>
+                <th className="px-4 py-3 border-b text-left font-semibold whitespace-nowrap">Additional Details</th>
+                <th className="px-4 py-3 border-b text-left font-semibold whitespace-nowrap">Attachment URLs</th>
+                <th className="px-4 py-3 border-b text-left font-semibold whitespace-nowrap">Desired Resolution</th>
+                <th className="px-4 py-3 border-b text-left font-semibold whitespace-nowrap">Sentiment</th>
+                <th className="px-4 py-3 border-b text-left font-semibold whitespace-nowrap">Urgency Level</th>
+                <th className="px-4 py-3 border-b text-left font-semibold whitespace-nowrap">Assistant Notes</th>
+                <th className="px-4 py-3 border-b text-left font-semibold whitespace-nowrap">Assigned To</th>
+                <th className="px-4 py-3 border-b text-left font-semibold whitespace-nowrap">Is Draft</th>
+                <th className="px-4 py-3 border-b text-left font-semibold whitespace-nowrap">Status</th>
+                <th className="px-4 py-3 border-b text-left font-semibold whitespace-nowrap">Resolution Notes</th>
+                <th className="px-4 py-3 border-b text-left font-semibold whitespace-nowrap">Resolved At</th>
+                <th className="px-4 py-3 border-b text-left font-semibold whitespace-nowrap">Created At</th>
               </tr>
-            ) : (
-              filteredTickets.map(ticket => (
-                <tr key={ticket.id} className="hover:bg-gray-50 transition">
-                  <td className="px-4 py-2 border-b">
-                    <button
-                      className="text-primary underline hover:text-primary/80 focus:outline-none"
-                      onClick={e => { e.preventDefault(); onReferenceClick && onReferenceClick(ticket); }}
-                      type="button"
-                    >
-                      {ticket.referenceNumber || ticket.id}
-                    </button>
-                  </td>
-                  <td className="px-4 py-2 border-b">{ticket.id}</td>
-                  <td className="px-4 py-2 border-b">{ticket.chatId}</td>
-                  <td className="px-4 py-2 border-b">{ticket.customerId}</td>
-                  <td className="px-4 py-2 border-b">{ticket.category}</td>
-                  <td className="px-4 py-2 border-b">{ticket.subCategory}</td>
-                  <td className="px-4 py-2 border-b">{ticket.description}</td>
-                  <td className="px-4 py-2 border-b">{ticket.additionalDetails}</td>
-                  <td className="px-4 py-2 border-b">{ticket.attachmentUrls}</td>
-                  <td className="px-4 py-2 border-b">{ticket.desiredResolution}</td>
-                  <td className="px-4 py-2 border-b">{ticket.sentiment}</td>
-                  <td className="px-4 py-2 border-b">{ticket.urgencyLevel}</td>
-                  <td className="px-4 py-2 border-b">{ticket.assistantNotes}</td>
-                  <td className="px-4 py-2 border-b">{ticket.assignedTo}</td>
-                  <td className="px-4 py-2 border-b">{String(ticket.isDraft)}</td>
-                  <td className="px-4 py-2 border-b">{ticket.status}</td>
-                  <td className="px-4 py-2 border-b">{ticket.resolutionNotes}</td>
-                  <td className="px-4 py-2 border-b">{ticket.resolvedAt ? new Date(ticket.resolvedAt).toLocaleString() : "-"}</td>
-                  <td className="px-4 py-2 border-b">{ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : "-"}</td>
+            </thead>
+            <tbody className="divide-y divide-gray-100" style={{ maxHeight: '420px', display: 'table-row-group' }}>
+              {filteredTickets.length === 0 ? (
+                <tr>
+                  <td colSpan={19} className="text-center py-8 text-gray-400">No tickets found.</td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                filteredTickets.map(ticket => (
+                  <tr key={ticket.id} className="hover:bg-gray-50 transition">
+                    <td className="px-4 py-3 border-b whitespace-nowrap align-top w-[180px]">
+                      <button
+                        className="text-primary underline hover:text-primary/80 focus:outline-none"
+                        onClick={e => { e.preventDefault(); onReferenceClick && onReferenceClick(ticket); }}
+                        type="button"
+                      >
+                        {ticket.referenceNumber || ticket.id}
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 border-b whitespace-nowrap align-top w-[120px]">{ticket.id}</td>
+                    <td className="px-4 py-3 border-b whitespace-nowrap align-top w-[120px]">{ticket.chatId}</td>
+                    <td className="px-4 py-3 border-b whitespace-nowrap align-top w-[120px]">{ticket.customerId}</td>
+                    <td className="px-4 py-3 border-b whitespace-nowrap align-top w-[120px]">{ticket.category}</td>
+                    <td className="px-4 py-3 border-b whitespace-nowrap align-top w-[120px]">{ticket.subCategory}</td>
+                    <td className="px-4 py-3 border-b whitespace-nowrap align-top w-[200px]">{ticket.description}</td>
+                    <td className="px-4 py-3 border-b whitespace-nowrap align-top w-[200px]">{ticket.additionalDetails}</td>
+                    <td className="px-4 py-3 border-b whitespace-nowrap align-top w-[200px]">{ticket.attachmentUrls}</td>
+                    <td className="px-4 py-3 border-b whitespace-nowrap align-top w-[180px]">{ticket.desiredResolution}</td>
+                    <td className="px-4 py-3 border-b whitespace-nowrap align-top w-[120px]">{ticket.sentiment}</td>
+                    <td className="px-4 py-3 border-b whitespace-nowrap align-top w-[120px]">{ticket.urgencyLevel}</td>
+                    <td className="px-4 py-3 border-b whitespace-nowrap align-top w-[200px]">{ticket.assistantNotes}</td>
+                    <td className="px-4 py-3 border-b whitespace-nowrap align-top w-[140px]">{ticket.assignedTo}</td>
+                    <td className="px-4 py-3 border-b whitespace-nowrap align-top w-[100px]">{String(ticket.isDraft)}</td>
+                    <td className="px-4 py-3 border-b whitespace-nowrap align-top w-[120px]">{ticket.status}</td>
+                    <td className="px-4 py-3 border-b whitespace-nowrap align-top w-[200px]">{ticket.resolutionNotes}</td>
+                    <td className="px-4 py-3 border-b whitespace-nowrap align-top w-[180px]">{ticket.resolvedAt ? new Date(ticket.resolvedAt).toLocaleString() : "-"}</td>
+                    <td className="px-4 py-3 border-b whitespace-nowrap align-top w-[180px]">{ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : "-"}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

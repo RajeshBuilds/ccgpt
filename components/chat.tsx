@@ -11,13 +11,12 @@ import { Messages } from './messages';
 import { useArtifactSelector } from '@/hooks/use-artifact';
 import { unstable_serialize } from 'swr/infinite';
 import { getChatHistoryPaginationKey } from './sidebar-history';
-import { toast } from './toast';
 import type { Session } from 'next-auth';
 import { useAutoResume } from '@/hooks/use-auto-resume';
 import { ChatSDKError } from '@/lib/errors';
 import type { Attachment, ChatMessage } from '@/lib/types';
 import { useDataStream } from './data-stream-provider';
-
+import { toast } from 'sonner';
 export function Chat({
   id,
   initialMessages,
@@ -26,6 +25,8 @@ export function Chat({
   session,
   autoResume,
   complaintId,
+  updateCurrentComplaintDetails,
+  updateComplaintSummary,
 }: {
   id: string;
   initialMessages: ChatMessage[];
@@ -34,6 +35,8 @@ export function Chat({
   session: Session;
   autoResume: boolean;
   complaintId: string;
+  updateCurrentComplaintDetails?: (details: any) => void;
+  updateComplaintSummary?: (summary: any) => void;
 }) {
   const { mutate } = useSWRConfig();
   const { setDataStream } = useDataStream();
@@ -72,15 +75,28 @@ export function Chat({
     onData: (dataPart) => {
       setDataStream((ds) => (ds ? [...ds, dataPart] : []));
     },
+    onToolCall: ({ toolCall }) => {
+      const toolName = toolCall.toolName;
+      if (!toolName) return;
+      if (toolName === 'updateComplaintSummary') {
+        if (updateComplaintSummary) {
+          // toolCall.input may be a string or object with summary
+          const summary = typeof toolCall.input === 'string' ? toolCall.input : toolCall.input;
+          updateComplaintSummary(summary);
+        }
+        console.log('[onToolCall] updateComplaintSummary:', toolCall.input);
+      } else if (toolName === 'updateCurrentComplaintDetails') {
+        if (updateCurrentComplaintDetails) {
+          updateCurrentComplaintDetails(toolCall.input);
+        }
+      }
+    },
     onFinish: () => {
       mutate(unstable_serialize(getChatHistoryPaginationKey));
     },
     onError: (error) => {
       if (error instanceof ChatSDKError) {
-        toast({
-          type: 'error',
-          description: error.message,
-        });
+        toast.error(error.message);
       }
     },
   });
@@ -94,7 +110,6 @@ export function Chat({
     resumeStream,
     setMessages,
   });
-
   return (
     <>
       <div className="flex flex-col min-w-0 h-full ">
