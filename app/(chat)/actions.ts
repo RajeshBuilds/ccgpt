@@ -3,16 +3,15 @@
 import { generateObject, generateText, type UIMessage } from 'ai';
 import { cookies } from 'next/headers';
 import { myProvider } from '@/lib/ai/providers';
-import { getComplaintById } from '@/lib/db/queries';
+import { assignComplaint, findEmployeeForAssignment, getComplaintById } from '@/lib/db/queries';
 import { z } from 'zod';
+import { ChatSDKError } from '@/lib/errors';
 
 const ComplaintReadinessSchema = z.object({
+  description: z.string().describe('The complaint description'),
+  desiredResolution: z.string().optional().describe('The desired resolution if provided'),
+  additionalDetails: z.string().optional().describe('Additional details relevant to the complaint if provided. These are helpful for the support team to understand the complaint better.'),
   isReady: z.boolean().describe('Whether all required information has been collected and both assistant and user have indicated that no further information is needed'),
-  complaintSummary: z.object({
-    description: z.string().describe('The complaint description'),
-    desiredResolution: z.string().optional().describe('The desired resolution if provided'),
-    additionalDetails: z.string().optional().describe('Additional details relevant to the complaint if provided. These are helpful for the support team to understand the complaint better.'),
-  }).describe('Structured summary of the complaint data'),
 });
 
 export async function saveChatModelAsCookie(model: string) {
@@ -28,14 +27,18 @@ export async function generateTitleFromUserMessage({
   const { text: title } = await generateText({
     model: myProvider.languageModel('title-model'),
     system: `\n
-    - you will generate a short title based on the first message a user begins a conversation with
-    - ensure it is not more than 80 characters long
+    - you will generate a short title ONLY when user provides the description of the complaint for the first time
+    - if the message is not a complaint description (e.g., greetings, questions, clarifications, follow-ups), return "null"
+    - ensure it is not more than 30 characters long
     - the title should be a summary of the user's message
-    - do not use quotes or colons`,
+    - be as specific as possible, do not use generic titles like "Complaint" or "Support" or "Assistance Needed" etc
+    - Do not append anything like "issue reported", "assistance needed" etc
+    - do not use quotes or colons
+    - only generate title for initial complaint descriptions, not for subsequent messages`,
     prompt: JSON.stringify(message),
   });
 
-  return title;
+  return title === "null" ? null : title;
 }
 
 export async function checkComplaintReadiness(complaintId: string, messages: UIMessage[]) {
@@ -46,8 +49,7 @@ export async function checkComplaintReadiness(complaintId: string, messages: UIM
       return null;
     }
     
-    const recentMessages = messages.slice(-4);
-    const conversationContext = recentMessages.map(msg => 
+    const conversationContext = messages.map(msg => 
       `${msg.role}: ${msg.parts.map(part => 
         part.type === 'text' ? part.text : ''
       ).join(' ')}`
@@ -56,23 +58,24 @@ export async function checkComplaintReadiness(complaintId: string, messages: UIM
     const { object: complaintReadiness } = await generateObject({
       model: myProvider.languageModel('chat-model-reasoning'),
       schema: ComplaintReadinessSchema,
-      prompt: `You are a complaint readiness checker agent. Analyze the provided complaint data and determine if all required information has been collected.
+      system: `You are a complaint readiness checker agent. Based on the provided conversation context, check if all required information has been collected and both assistant and user have indicated that no further information is needed.
 
 VALIDATION RULES:
-1. Check if all mandatory fields are present (description)
-2. Assess if the description is detailed enough and understandable (at least 50 characters)
-3. Verify that both assistant and user have indicated no further information is needed
-4. Determine if the complaint is ready for confirmation
+** Check if all these fields are present:
+- Description: Check if the description is present and assess if it is detailed enough and understandable
+- Desired Resolution: Check if the desired resolution is present and assess if it is detailed enough and understandable
+- Additional Details: Check if the additional details which can be helpful for the support team to understand the complaint better are present
 
-Complaint data to validate:
-- Description: ${complaint.description || 'NOT SET'}
-- Desired Resolution: ${complaint.desiredResolution || 'NOT SET'}
-- Additional Details: ${complaint.additionalDetails || 'NOT SET'}
+** MUST CHECK THAT BOTH ASSISTANT AND USER HAVE INDICATED THAT NO FURTHER INFORMATION IS NEEDED
 
-Recent conversation context:
-${conversationContext}
-
-Analyze both the complaint data completeness AND the conversation context to determine if the user and assistant have both indicated the information collection is complete.`,
+** If the complaint is ready for confirmation, return the complaint readiness object with the following fields:
+- description: the description of the complaint
+- desiredResolution: the desired resolution of the complaint
+- additionalDetails: the additional details of the complaint
+- isReady: If you are sure that all required information has been collected and **both assistant and user have indicated that no further information is needed** based on the conversation context, return true, otherwise return false
+`,
+      prompt: `Conversation context:
+${conversationContext}`,
     });
 
     return complaintReadiness;
@@ -82,4 +85,38 @@ Analyze both the complaint data completeness AND the conversation context to det
   }
 }
 
+export async function assignComplaintToEmployee(complaintId: string) {
+  try {
+    const employee = await findEmployeeForAssignment();
+    if (!employee) {
+      throw new ChatSDKError('not_found:database', 'No available employee found');
+    }
 
+    const assignment = await assignComplaint({ complaintId, employeeId: employee.id });
+    
+    console.log('✅ Complaint assigned successfully:', {
+      assignmentId: assignment.id,
+      complaintId: complaintId,
+      employeeId: employee.id,
+      assignedAt: assignment.assignedAt,
+    });
+
+    console.log('Sending email notification...');
+
+    sendNotification();
+  } catch (error) {
+    console.error('Error assigning complaint to employee:', error);
+  }
+}
+
+function sendNotification() {
+  fetch('https://bv6lbqib2kyyzcvgbbvdrjenoq0bgssk.lambda-url.us-east-1.on.aws/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({}),
+  }).catch(error => {
+    console.error('Lambda function call failed:', error);
+  });
+}

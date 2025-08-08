@@ -9,13 +9,13 @@ export default function Home() {
       <div className="flex-1 flex items-center justify-center">
         <div className="flex flex-col gap-4">
           <Button size="lg" className="w-48" asChild>
-            <Link href="/complaint/new">
+            <Link href="/login/customer">
               Customer Login
             </Link>
           </Button>
           <Button size="lg" variant="outline" className="w-48" asChild>
-            <Link href="/csr">
-              CSR Login
+            <Link href="/login/employee">
+              Employee Login
             </Link>
           </Button>
         </div>

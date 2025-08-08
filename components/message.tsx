@@ -122,7 +122,13 @@ const PurePreviewMessage = ({
                             message.role === 'user',
                         })}
                       >
-                        <Markdown>{sanitizeText(part.text)}</Markdown>
+                        {message.role === 'user' ? (
+                          <div className="whitespace-pre-wrap">
+                            {sanitizeText(part.text)}
+                          </div>
+                        ) : (
+                          <Markdown>{sanitizeText(part.text)}</Markdown>
+                        )}
                       </div>
                     </div>
                   );

@@ -36,6 +36,7 @@ export const chat = pgTable("chat", {
   title: text("title"),
   customerId: integer("customer_id").references(() => customer.id),
   employeeId: integer("employee_id").references(() => employee.id),
+  isDraft: boolean("is_draft").default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
@@ -44,7 +45,7 @@ export type Chat = InferSelectModel<typeof chat>;
 
 export const message = pgTable("message", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
-  chatId: uuid("chat_id").notNull().references(() => chat.id),
+  chatId: uuid("chat_id").notNull().references(() => chat.id, { onDelete: "cascade" }),
   role: varchar("role").notNull(),
   parts: json("parts").notNull(),
   attachments: json("attachments"),
@@ -56,7 +57,7 @@ export type Message = InferSelectModel<typeof message>;
 
 export const stream = pgTable('stream', {
     id: uuid('id').primaryKey().notNull().defaultRandom(),
-    chatId: uuid('chat_id').notNull().references(() => chat.id),
+    chatId: uuid('chat_id').notNull().references(() => chat.id, { onDelete: "cascade" }),
     createdAt: timestamp('created_at').notNull().defaultNow(),
   }
 );
@@ -68,10 +69,10 @@ export const vote = pgTable(
   {
     chatId: uuid('chat_id')
       .notNull()
-      .references(() => chat.id),
+      .references(() => chat.id, { onDelete: "cascade" }),
     messageId: uuid('message_id')
       .notNull()
-      .references(() => message.id),
+      .references(() => message.id, { onDelete: "cascade" }),
     isUpvoted: boolean('is_upvoted').notNull(),
   },
   (table) => [
@@ -93,7 +94,7 @@ export const document = pgTable(
       .default('text'),
     customerId: integer("customer_id").references(() => customer.id),
     employeeId: integer("employee_id").references(() => employee.id),
-    chatId: uuid("chat_id").notNull().references(() => chat.id),
+    chatId: uuid("chat_id").notNull().references(() => chat.id, { onDelete: "cascade" }),
   },
   (table) => [
     primaryKey({ columns: [table.id, table.createdAt] }),
@@ -101,6 +102,24 @@ export const document = pgTable(
 );
 
 export type Document = InferSelectModel<typeof document>;
+
+export const workspace = pgTable('workspace', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  chatId: uuid('chat_id').notNull().references(() => chat.id, { onDelete: "cascade" }),
+  employeeId: integer('employee_id').notNull().references(() => employee.id),
+  documentId: uuid('document_id'),
+  documentCreatedAt: timestamp('document_created_at'),
+  complaintId: uuid('complaint_id').notNull().references(() => complaint.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => [
+  foreignKey({
+    columns: [table.documentId, table.documentCreatedAt],
+    foreignColumns: [document.id, document.createdAt],
+  }),
+]);
+
+export type Workspace = InferSelectModel<typeof workspace>;
 
 export const suggestion = pgTable(
   'suggestion',
@@ -189,3 +208,17 @@ export const complaintComment = pgTable('complaint_comment',
 );
 
 export type ComplaintComment = InferSelectModel<typeof complaintComment>;
+
+export const complaintAssignment = pgTable('complaint_assignment',
+  {
+    id: uuid('id').primaryKey().notNull().defaultRandom(),
+    complaintId: uuid('complaint_id').notNull().references(() => complaint.id),
+    employeeId: integer('employee_id').notNull().references(() => employee.id),
+    assignedAt: timestamp('assigned_at').notNull().defaultNow(),
+    unassignedAt: timestamp('unassigned_at'),
+    assignmentStatus: varchar('assignment_status', { enum: ['active', 'reassigned', 'closed'] }).notNull().default('active'),
+    remarks: text('remarks'),
+  },
+);
+
+export type ComplaintAssignment = InferSelectModel<typeof complaintAssignment>;

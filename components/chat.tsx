@@ -40,6 +40,9 @@ export function Chat({
 
   const [input, setInput] = useState<string>('');
 
+  const userType = session.user.type;
+  const apiUrl = userType === 'customer' ? '/api/chat' : '/api/ws';
+
   const {
     messages,
     setMessages,
@@ -54,7 +57,7 @@ export function Chat({
     experimental_throttle: 100,
     generateId: generateUUID,
     transport: new DefaultChatTransport({
-      api: '/api/chat',
+      api: apiUrl,
       fetch: fetchWithErrorHandlers,
       prepareSendMessagesRequest({ messages, id, body }) {
         return {

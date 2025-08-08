@@ -17,18 +17,18 @@ import { Label } from '@/components/ui/label';
 import { cn, generateUUID } from '@/lib/utils';
 import { signIn } from '@/lib/auth-client';
 
-export function CustomerLoginForm({
+export function EmployeeLoginForm({
   className,
   ...props
 }: React.ComponentProps<'div'>) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const [customerId, setCustomerId] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
   const [password, setPassword] = useState('');
 
   async function handleSignIn() {
-    if (!customerId.trim()) {
-      toast.error('Please enter your customer ID');
+    if (!employeeId.trim()) {
+      toast.error('Please enter your employee ID');
       return;
     }
     
@@ -39,18 +39,17 @@ export function CustomerLoginForm({
 
     setLoading(true);
     try {
-      const result = await signIn('customer', {
-        customerId: parseInt(customerId),
+      const result = await signIn('employee', {
+        employeeId: parseInt(employeeId),
         password,
         redirect: false,
       });
 
       if (result?.error) {
-        toast.error("Customer ID or password is incorrect");
+        toast.error("Employee ID or password is incorrect");
       } else {
         toast.success('Signed in successfully');
-        const chatId = generateUUID();
-        router.push(`/chat/${chatId}`);
+        router.push(`/dashboard`);
       }
     } catch (error) {
       console.error(error);
@@ -64,9 +63,9 @@ export function CustomerLoginForm({
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Customer Login</CardTitle>
+          <CardTitle className="text-xl">Employee Login</CardTitle>
           <CardDescription>
-            Login with your Customer ID to file a complaint or check the status of your complaint.
+            Login with your Employee ID to access the Complaint Management Portal.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -74,15 +73,15 @@ export function CustomerLoginForm({
             <div className="grid gap-6">
               <div className="grid gap-6">
                 <div className="grid gap-3">
-                  <Label htmlFor="customerId">Customer ID</Label>
+                  <Label htmlFor="employeeId">Employee ID</Label>
                   <Input
                     disabled={loading}
-                    id="customerId"
-                    onChange={(e) => setCustomerId(e.target.value)}
-                    placeholder="Enter your customer ID"
+                    id="employeeId"
+                    onChange={(e) => setEmployeeId(e.target.value)}
+                    placeholder="Enter your employee ID"
                     required
                     type="text"
-                    value={customerId}
+                    value={employeeId}
                   />
                 </div>
                 <div className="grid gap-3">
@@ -118,8 +117,8 @@ export function CustomerLoginForm({
         </CardContent>
       </Card>
       <div className="text-balance text-center text-muted-foreground text-xs">
-        <a href="/login/employee" className="underline underline-offset-4 hover:text-primary">
-          Login as Employee
+        <a href="/login/customer" className="underline underline-offset-4 hover:text-primary">
+          Login as Customer
         </a>
       </div>
     </div>
