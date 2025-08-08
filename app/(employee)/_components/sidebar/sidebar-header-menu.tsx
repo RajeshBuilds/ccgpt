@@ -41,7 +41,7 @@ export function SidebarHeaderMenu({
                 <Landmark className="size-4" />
               </div>
               <div className="flex flex-col gap-0.5 leading-none">
-                <span className="font-medium">Citibank CMS</span>
+                <span className="font-medium">Nexus Bank CMS</span>
                 <div className="flex items-center gap-2">
                   <div 
                     className={`w-1.5 h-1.5 rounded-full ${

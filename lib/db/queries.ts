@@ -5,6 +5,7 @@ import { db } from "./drizzle";
 import { chat, Chat, complaint, complaintAssignment, complaintCategory, complaintSubCategory, Customer, customer, document, employee, Employee, Message, message, stream, suggestion, Suggestion, workspace, Workspace } from "./schema";
 import { UserType } from "@/app/(auth)/auth";
 import { ArtifactKind } from "@/components/artifact";
+import { stat } from "fs";
 
 // ===================================== Customer =====================================
 export async function getCustomer(id: number): Promise<Array<Customer>> {
@@ -423,9 +424,23 @@ export async function saveComplaintDetails({
   desiredResolution?: string;
 }) {
   try {
+    // Get existing complaint to check if it already has a reference number
+    const existingComplaint = await getComplaintById(id);
+    let referenceNumber = existingComplaint?.referenceNumber;
+    
+    // Generate reference number if it doesn't exist
+    if (!referenceNumber) {
+      const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
+      const random = Math.random().toString(36).substring(2, 5).toUpperCase(); // 3 random chars
+      referenceNumber = `CMP${timestamp}${random}`;
+    }
+
     const updateData: any = {
       updatedAt: new Date(),
       description,
+      referenceNumber,
+      isDraft: false, // Mark complaint as submitted
+      status: 'open', // Set initial status
     };
 
     if (additionalDetails !== undefined) {
@@ -437,6 +452,8 @@ export async function saveComplaintDetails({
     if (desiredResolution !== undefined) {
       updateData.desiredResolution = desiredResolution;
     }
+
+    console.log('Updating complaint with reference number:', referenceNumber);
 
     return await db
       .update(complaint)
@@ -481,11 +498,35 @@ export async function getComplaintByReferenceNum(reference_num: string) {
   }
 }
 
-export async function submitComplaint({ id }: { id: string }) {
+export async function submitComplaint({ 
+  id, 
+  category, 
+  description, 
+  additionalDetails, 
+  desiredResolution,
+  sentiment 
+}: { 
+  id: string; 
+  category?: string;
+  description?: string;
+  additionalDetails?: string;
+  desiredResolution?: string;
+  sentiment?: string;
+}) {
   try {
-    return await db
+    const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
+    const random = Math.random().toString(36).substring(2, 5).toUpperCase(); // 3 random chars
+    const referenceNumber = `CMP${timestamp}${random}`;
+
+    await db
       .update(complaint)
       .set({
+        referenceNumber,
+        category,
+        description,
+        additionalDetails,
+        desiredResolution,
+        sentiment,
         isDraft: false,
         status: 'open',
         updatedAt: new Date(),
@@ -818,7 +859,10 @@ export async function getComplaintsAssignedToEmployee({
     const complaintIds = assignments.map(assignment => assignment.complaintId);
 
     // Build where conditions for complaints
-    const whereConditions = [sql`${complaint.id} IN (${sql.join(complaintIds.map(id => sql`${id}`), sql`, `)})`];
+    const whereConditions = [
+      sql`${complaint.id} IN (${sql.join(complaintIds.map(id => sql`${id}`), sql`, `)})`,
+      eq(complaint.isDraft, false) // Only include submitted complaints
+    ];
     
     if (status && status !== 'all') {
       whereConditions.push(eq(complaint.status, status as any));
@@ -976,4 +1020,75 @@ function mapRowToComplaint(row: any) {
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
+}
+
+/**
+ * Updates the status, resolution notes, and resolvedAt fields of a complaint.
+ * If status is 'resolved', also updates the complaintAssignment table for the complaint.
+ * @param complaintId - The ID of the complaint to update
+ * @param resolutionNotes - The resolution notes to set
+ * @param resolvedAt - The timestamp when the complaint was resolved
+ * @param status - The new status for the complaint
+ */
+export async function updateComplaintStatusById({
+  complaintId,
+  status,
+  resolutionNotes,
+}: {
+  complaintId: string;
+  status: 'open' | 'assigned' | 'in_progress' | 'closed' | 'escalated';
+  resolutionNotes?: string;
+}) {
+  const now = new Date();
+  // Build update object
+  const updateObj: any = {
+    resolvedAt: now,
+    status,
+  };
+  if (typeof resolutionNotes !== 'undefined' && status === 'closed') {
+    updateObj.resolutionNotes = resolutionNotes;
+  }
+  // Update complaint table
+  await db.update(complaint)
+    .set(updateObj)
+    .where(eq(complaint.id, complaintId));
+
+  // If status is 'closed', update complaintAssignment as well
+  if (status === 'closed') {
+    await db.update(complaintAssignment)
+      .set({
+        assignedAt: now,
+        assignmentStatus: 'closed',
+      })
+      .where(eq(complaintAssignment.complaintId, complaintId));
+  }
+}
+
+/**
+ * Updates the category and subCategory fields of a complaint by its ID.
+ * @param complaintId - The ID of the complaint to update
+ * @param category - The new category value
+ * @param subCategory - The new subCategory value
+ */
+export async function updateComplaintCategoryById({
+  complaintId,
+  category,
+  subCategory,
+}: {
+  complaintId: string;
+  category?: string;
+  subCategory?: string;
+}) {
+  // Build update object only with non-empty fields
+  const updateObj: Record<string, string> = {};
+  if (category && category.trim() !== '') {
+    updateObj.category = category;
+  }
+  if (subCategory && subCategory.trim() !== '') {
+    updateObj.subCategory = subCategory;
+  }
+  if (Object.keys(updateObj).length === 0) return; // Nothing to update
+  await db.update(complaint)
+    .set(updateObj)
+    .where(eq(complaint.id, complaintId));
 }

@@ -30,17 +30,15 @@ import { ChatSDKError } from '@/lib/errors';
 import type { ChatMessage } from '@/lib/types';
 import type { ChatModel } from '@/lib/ai/models';
 import { artifactsPrompt, regularPrompt } from '@/lib/ai/prompts';
-import { registerComplaint } from '@/lib/ai/tools/complaint/register-complaint';
 import { createDocument } from '@/lib/ai/tools/create-document';
-import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 import { updateDocument } from '@/lib/ai/tools/update-document';
 import { complaintResolverPrompt } from '@/lib/ai/prompts';
-import { fetchComplaintByRef } from '@/lib/ai/tools/complaint/fetch-complaint-by-ref';
-import { assignComplaintToCurrentUser } from '@/lib/ai/tools/complaint/assign-complaint';
-import { updateCurrentComplaintDetails } from '@/lib/ai/tools/complaint/update-current-complaint-details';
-import { updateComplaintSummary } from '@/lib/ai/tools/complaint/update-complaint-summary';
-import { fetchComplaintsByAssignee } from '@/lib/ai/tools/complaint/fetch-complaints-by-assignee';
 import { fetchComplaintsWithNaturalLanguageQuery } from '@/lib/ai/tools/complaint/fetch-complaints-with-natural-language-query';
+import { uploadComplaintSummaryToDatabase } from '@/lib/ai/tools/complaint/upload-complaint-summary-to-database';
+import { queryKnowledgeBase } from '@/lib/ai/tools/complaint/query-knowledge-base';
+import { updateComplaintStatus } from '@/lib/ai/tools/complaint/update-complaint-status';
+import { updateComplaintCategory } from '@/lib/ai/tools/complaint/update-complaint-category';
+import { getCustomerDetailsById } from '@/lib/ai/tools/complaint/get-customer-details-by-id';
 
 
 export const maxDuration = 120;
@@ -165,10 +163,23 @@ export async function POST(request: Request) {
           
           your chat_id is ${id}, use this to retrieve the past conversation history & context.
 
-                    ${complaintResolverPrompt} ${artifactsPrompt}
-            - Whenever the complaint is closed / resolved, create an elaborate summary of this complaint resolution based on the chat history. 
-            - Check with the user if the summary is ready to be uploaded to database and update if necessary.
-            - Upon confirmation, upload the summary to the database using the provided tools.
+                    ${complaintResolverPrompt} 
+                   
+            
+          ## POINTS TO REMEMBER WHEN CLOSING / RESOLVING A COMPLAINT:  
+            - Create an elaborate summary of this complaint resolution based on the chat history. 
+            - AFTER GENERATING THE SUMMARY, SHOW THE COMPLAINT SUMMARY TO THE USER VIA ARTIFACT TOOLS LIKE  \`createDocument\` and \`updateDocument\` AND GET CONFIRMATION.
+            - ONLY UPON CONFIRMATION, upload the summary to the database using the \`uploadComplaintSummaryToDatabase\` tool.
+           
+            ##ARTIFACT DETAILS
+            ${artifactsPrompt}
+
+            ## STRUCTURE OF THE COMPLAINT RESOLUTION SUMMARY:
+            - The complaint summary with all complaint details.
+            - Investigartion process starting with initial assessment till final analysis and gathered information.
+            - Steps talken to resolve the complaint.
+            
+            THE COMPLAINT IS CONSIDERED CLOSED ONLY WHEN THE USER CONFIRMS THE RESOLUTION SUMMARY.
 
           `,
           messages: convertToModelMessages(uiMessages),
@@ -177,15 +188,26 @@ export async function POST(request: Request) {
             selectedChatModel === 'chat-model-reasoning'
               ? []
               : [
+                  'queryKnowledgeBase',
                   'createDocument',
                   'updateDocument',
-                  'fetchComplaintsWithNaturalLanguageQuery'
+                  'fetchComplaintsWithNaturalLanguageQuery',
+                  'uploadComplaintSummaryToDatabase',
+                  'updateComplaintStatus',
+                  'updateComplaintCategory',
+                  'getCustomerDetails'
                 ],
           experimental_transform: smoothStream({ chunking: 'word' }),
                       tools: {
               createDocument: createDocument({ session, dataStream, chatId: id }),
               updateDocument: updateDocument({ session, dataStream }),
-              fetchComplaintsWithNaturalLanguageQuery : fetchComplaintsWithNaturalLanguageQuery
+              fetchComplaintsWithNaturalLanguageQuery : fetchComplaintsWithNaturalLanguageQuery,
+              uploadComplaintSummaryToDatabase: uploadComplaintSummaryToDatabase,
+              queryKnowledgeBase: queryKnowledgeBase,
+              updateComplaintStatus: updateComplaintStatus,
+              updateComplaintCategory:updateComplaintCategory,
+              getCustomerDetails:getCustomerDetailsById
+              
             },
           experimental_telemetry: {
             isEnabled: false,
