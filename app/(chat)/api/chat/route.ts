@@ -86,7 +86,8 @@ export async function POST(request: Request) {
     }
 
     // Check if complaint exists
-    const complaint = await getComplaintById(complaintId);
+    let complaint = await getComplaintById(complaintId);
+    let complaintReadiness: { isReady: boolean } | null = null;
     console.log('Complaint details:', complaint);
 
     if (!complaint) {
@@ -143,12 +144,14 @@ export async function POST(request: Request) {
 
         // Only check readiness if the complaint is still a draft
         if (complaint && complaint.isDraft) {
-          const complaintReadiness = await checkComplaintReadiness(complaintId, uiMessages);
+          complaintReadiness = await checkComplaintReadiness(complaintId, uiMessages);
+          complaint = await getComplaintById(complaintId);
           console.log('Complaint readiness:', complaintReadiness);
 
           if (complaintReadiness?.isReady) {
             try {
               await submitComplaint({ id: complaintId });
+              complaint = await getComplaintById(complaintId);
               await updateChatIsDraft({ id, isDraft: false });
               console.log('Complaint submitted successfully:', complaintId);
               console.log('Complaint details:', complaint);
@@ -166,7 +169,10 @@ export async function POST(request: Request) {
           model: myProvider.languageModel(selectedChatModel),
           system: `${customerComplaintPrompt}
 
-IMPORTANT: When providing the complaint reference number after the complaint is submitted, use this exact reference number: ${complaint?.referenceNumber || 'PENDING'}
+IMPORTANT: Check if the complaint reference number is generated and provided below after the complaint submission. If it's not null then only tell the customer the reference number.
+Also check if the complaint is ready to submit. If the complaint readiness is not true yet, then do not show the reference number. Only show once both are truthy.
+Complaint Reference Number: ${complaint?.referenceNumber}
+Complaint Readiness: ${complaintReadiness?.isReady}
 
 Do not generate or make up any other reference numbers. Use only the provided reference number above.`,
           messages: convertToModelMessages(uiMessages),

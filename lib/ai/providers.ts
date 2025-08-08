@@ -16,13 +16,13 @@ const bedrock = createAmazonBedrock({
 
 export const myProvider = customProvider({
   languageModels: {
-    'chat-model': bedrock(BEDROCK_CLAUDE_SONNET_4),
+    'chat-model': openai(GPT_4O),
     'chat-model-reasoning': wrapLanguageModel({
-      model: bedrock(BEDROCK_CLAUDE_SONNET_4),
+      model: openai(GPT_4O),
       middleware: extractReasoningMiddleware({ tagName: 'think' }),
     }),
-    'complaint-assistant-model': bedrock(BEDROCK_CLAUDE_SONNET_4),
-    'title-model': bedrock(BEDROCK_CLAUDE_SONNET_4),
-    'artifact-model': bedrock(BEDROCK_CLAUDE_SONNET_4),
+    'complaint-assistant-model': openai(GPT_4O),
+    'title-model': openai(GPT_4O),
+    'artifact-model': openai(GPT_4O),
   }
 });

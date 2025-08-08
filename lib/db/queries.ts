@@ -423,9 +423,23 @@ export async function saveComplaintDetails({
   desiredResolution?: string;
 }) {
   try {
+    // Get existing complaint to check if it already has a reference number
+    const existingComplaint = await getComplaintById(id);
+    let referenceNumber = existingComplaint?.referenceNumber;
+    
+    // Generate reference number if it doesn't exist
+    if (!referenceNumber) {
+      const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
+      const random = Math.random().toString(36).substring(2, 5).toUpperCase(); // 3 random chars
+      referenceNumber = `CMP${timestamp}${random}`;
+    }
+
     const updateData: any = {
       updatedAt: new Date(),
       description,
+      referenceNumber,
+      isDraft: false, // Mark complaint as submitted
+      status: 'open', // Set initial status
     };
 
     if (additionalDetails !== undefined) {
@@ -437,6 +451,8 @@ export async function saveComplaintDetails({
     if (desiredResolution !== undefined) {
       updateData.desiredResolution = desiredResolution;
     }
+
+    console.log('Updating complaint with reference number:', referenceNumber);
 
     return await db
       .update(complaint)
@@ -483,9 +499,14 @@ export async function getComplaintByReferenceNumber(referenceNumber: string) {
 
 export async function submitComplaint({ id }: { id: string }) {
   try {
-    return await db
+    const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
+    const random = Math.random().toString(36).substring(2, 5).toUpperCase(); // 3 random chars
+    const referenceNumber = `CMP${timestamp}${random}`;
+
+    await db
       .update(complaint)
       .set({
+        referenceNumber,
         isDraft: false,
         status: 'open',
         updatedAt: new Date(),
