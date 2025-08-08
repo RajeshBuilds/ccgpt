@@ -208,7 +208,7 @@ export default function AnalyticsDashboard() {
     if (active && payload && payload.length) {
       return (
         <div className="bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-3">
-          <p className="font-medium">{`${label}`}</p>
+          <p className="font-medium">{label}</p>
           {payload.map((entry: any, index: number) => (
             <p key={index} style={{ color: entry.color }} className="text-sm">
               {`${entry.dataKey}: ${entry.value}`}

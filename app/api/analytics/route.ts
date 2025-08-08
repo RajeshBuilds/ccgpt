@@ -232,17 +232,17 @@ export async function GET(request: NextRequest) {
           escalated: trend.escalated,
         })),
         statusDistribution: statusDistribution.map(status => ({
-          name: status.status?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Unknown',
+          name: status.status ? status.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unassigned',
           value: status.count,
           status: status.status,
         })),
         urgencyDistribution: urgencyDistribution.map(urgency => ({
-          name: urgency.urgencyLevel?.replace(/\b\w/g, l => l.toUpperCase()) || 'Unknown',
+          name: urgency.urgencyLevel ? urgency.urgencyLevel.replace(/\b\w/g, l => l.toUpperCase()) : 'Not Set',
           value: urgency.count,
           urgency: urgency.urgencyLevel,
         })),
         categoryDistribution: categoryDistribution.map(category => ({
-          name: category.category || 'Unknown',
+          name: category.category || 'Uncategorized',
           value: category.count,
         })),
         resolutionTimes: resolutionTimes.map(rt => ({
