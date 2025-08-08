@@ -26,6 +26,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowDown } from 'lucide-react';
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom';
 import type { Attachment, ChatMessage } from '@/lib/types';
+import { useSession } from 'next-auth/react';
 
 function PureMultimodalInput({
   chatId,
@@ -54,6 +55,9 @@ function PureMultimodalInput({
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
+  // Determine user type from sessionStorage (set this on login)
+  const { data: session } = useSession();
+  const userType = session?.user?.type;
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -105,7 +109,12 @@ function PureMultimodalInput({
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
 
   const submitForm = useCallback(() => {
-    window.history.replaceState({}, '', `/chat/${chatId}`);
+    
+    if (userType === 'employee') {
+      window.history.replaceState({}, '', `/employee/workspace/${chatId}`);
+    } else {
+      window.history.replaceState({}, '', `/chat/${chatId}`);
+    }
 
     sendMessage({
       role: 'user',

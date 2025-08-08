@@ -8,6 +8,8 @@ import {
   LogOut,
   Sparkles,
 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useCallback } from "react"
 
 import {
   Avatar,
@@ -38,9 +40,27 @@ export function NavUser({
     id: number
     name: string
     avatar: string
+    userType?: string // optional, for employee/customer distinction
   }
 }) {
   const { isMobile } = useSidebar()
+  const router = useRouter()
+
+  // Logout handler: clear sessionStorage and redirect
+  const handleLogout = useCallback(() => {
+    // Remove session user (if stored)
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('user');
+      sessionStorage.removeItem('userType');
+    }
+    // Redirect based on userType
+    const userType = user.userType || sessionStorage.getItem('userType');
+    if (userType === 'employee') {
+      router.replace('/login/employee');
+    } else {
+      router.replace('/login/customer');
+    }
+  }, [router, user.userType]);
 
   return (
     <SidebarMenu>
@@ -85,29 +105,7 @@ export function NavUser({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <LogOut />
               Log out
             </DropdownMenuItem>

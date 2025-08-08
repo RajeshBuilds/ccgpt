@@ -424,6 +424,23 @@ export async function getComplaintById(id: string) {
   }
 }
 
+export async function getComplaintByReferenceNum(reference_num: string) {
+  try {
+    const result = await db
+      .select()
+      .from(complaint)
+      .where(eq(complaint.referenceNumber, reference_num))
+      .limit(1);
+
+    return result[0] || null;
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to get complaint by id',
+    );
+  }
+}
+
 export async function submitComplaint({ id }: { id: string }) {
   try {
     return await db
@@ -439,7 +456,7 @@ export async function submitComplaint({ id }: { id: string }) {
   }
 }
 
-export async function assignComplaintToEmployee({
+export async function assignComplaintToEmployeeById({
   complaintId,
   employeeId,
 }: {
@@ -455,6 +472,27 @@ export async function assignComplaintToEmployee({
         updatedAt: new Date(),
       })
       .where(eq(complaint.id, complaintId));
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to assign complaint');
+  }
+}
+
+export async function assignComplaintToEmployeeByRef({
+  referenceNumber,
+  employeeId,
+}: {
+  referenceNumber: string;
+  employeeId: number;
+}) {
+  try {
+    return await db
+      .update(complaint)
+      .set({
+        assignedTo: employeeId,
+        status: 'assigned',
+        updatedAt: new Date(),
+      })
+      .where(eq(complaint.referenceNumber, referenceNumber));
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to assign complaint');
   }
@@ -485,4 +523,62 @@ export async function findEmployeeByCategory({ category }: { category: string })
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to find employee');
   }
+}
+
+// Get all complaints assigned to a specific employee
+export async function getComplaintsAssignedToEmployee(employeeId: number) {
+  try {
+    return await db
+      .select()
+      .from(complaint)
+      .where(eq(complaint.assignedTo, employeeId));
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get assigned complaints');
+  }
+}
+
+// Get all complaints in the database
+export async function getAllComplaints() {
+  try {
+    return await db.select().from(complaint);
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get all complaints');
+  }
+}
+
+// fetch data with custom query
+export async function fetchComplaintsWithQuery(query: string) {
+  try {
+    console.log('Query executed:', query);
+    const result = (await db.execute(query.trim())).rows.map(row => mapRowToComplaint(row));
+    console.log('Result:', result);
+    return result;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to fetch data with custom query');
+  }
+}
+
+function mapRowToComplaint(row: any) {
+  return {
+    id: row.id,
+    referenceNumber: row.reference_number,
+    chatId: row.chat_id,
+    customerId: row.customer_id,
+    category: row.category,
+    subCategory: row.sub_category,
+    description: row.description,
+    additionalDetails: row.additional_details,
+    attachmentUrls: row.attachment_urls,
+    desiredResolution: row.desired_resolution,
+    sentiment: row.sentiment,
+    urgencyLevel: row.urgency_level,
+    assistantNotes: row.assistant_notes,
+    assignedTo: row.assigned_to,
+    isDraft: row.is_draft,
+    status: row.status,
+    resolutionNotes: row.resolution_notes,
+    resolvedAt: row.resolved_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
 }
