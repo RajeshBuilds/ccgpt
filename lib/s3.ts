@@ -1,25 +1,28 @@
 import { S3Client } from '@aws-sdk/client-s3';
-import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 
-// S3 Client Configuration with credentials chain
+// S3 Client Configuration with explicit credentials
 export const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'us-east-1',
-  credentials: fromNodeProviderChain(),
+  region: process.env.XYZ_REGION || 'us-east-1',
+  credentials: {
+    accessKeyId: process.env.XYZ_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.XYZ_SECRET_ACCESS_KEY!,
+    ...(process.env.XYZ_SESSION_TOKEN && { sessionToken: process.env.XYZ_SESSION_TOKEN }),
+  },
 });
 
 console.log('🔧 S3 Client initialized with config:', {
-  region: process.env.AWS_REGION || 'us-east-1',
-  hasAccessKey: !!process.env.AWS_ACCESS_KEY_ID,
-  hasSecretKey: !!process.env.AWS_SECRET_ACCESS_KEY,
-  hasSessionToken: !!process.env.AWS_SESSION_TOKEN,
-  bucketName: process.env.AWS_S3_BUCKET_NAME,
-  accessKeyPrefix: process.env.AWS_ACCESS_KEY_ID?.substring(0, 5) + '...',
+  region: process.env.XYZ_REGION || 'us-east-1',
+  hasAccessKey: !!process.env.XYZ_ACCESS_KEY_ID,
+  hasSecretKey: !!process.env.XYZ_SECRET_ACCESS_KEY,
+  hasSessionToken: !!process.env.XYZ_SESSION_TOKEN,
+  bucketName: process.env.XYZ_S3_BUCKET_NAME,
+  accessKeyPrefix: process.env.XYZ_ACCESS_KEY_ID?.substring(0, 5) + '...',
 });
 
 // S3 Configuration Constants
 export const S3_CONFIG = {
-  BUCKET_NAME: process.env.AWS_S3_BUCKET_NAME!,
-  REGION: process.env.AWS_REGION || 'us-east-1',
+  BUCKET_NAME: process.env.XYZ_S3_BUCKET_NAME!,
+  REGION: process.env.XYZ_REGION || 'us-east-1',
   MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
   ALLOWED_FILE_TYPES: [
     'image/jpeg',
