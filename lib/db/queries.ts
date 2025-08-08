@@ -497,7 +497,21 @@ export async function getComplaintByReferenceNumber(referenceNumber: string) {
   }
 }
 
-export async function submitComplaint({ id }: { id: string }) {
+export async function submitComplaint({ 
+  id, 
+  category, 
+  description, 
+  additionalDetails, 
+  desiredResolution,
+  sentiment 
+}: { 
+  id: string; 
+  category?: string;
+  description?: string;
+  additionalDetails?: string;
+  desiredResolution?: string;
+  sentiment?: string;
+}) {
   try {
     const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
     const random = Math.random().toString(36).substring(2, 5).toUpperCase(); // 3 random chars
@@ -507,6 +521,11 @@ export async function submitComplaint({ id }: { id: string }) {
       .update(complaint)
       .set({
         referenceNumber,
+        category,
+        description,
+        additionalDetails,
+        desiredResolution,
+        sentiment,
         isDraft: false,
         status: 'open',
         updatedAt: new Date(),

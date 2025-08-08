@@ -18,7 +18,7 @@ import {
   updateChatIsDraft,
 } from '@/lib/db/queries';
 import { convertToUIMessages, generateUUID } from '@/lib/utils';
-import { assignComplaintToEmployee, checkComplaintReadiness, generateTitleFromUserMessage } from '../../actions';
+import { assignComplaintToEmployee, checkComplaintReadiness, generateTitleFromUserMessage, predictComplaintCategory } from '../../actions';
 import { myProvider } from '@/lib/ai/providers';
 import { postRequestBodySchema, type PostRequestBody } from './schema';
 import {
@@ -87,7 +87,12 @@ export async function POST(request: Request) {
 
     // Check if complaint exists
     let complaint = await getComplaintById(complaintId);
-    let complaintReadiness: { isReady: boolean } | null = null;
+    let complaintReadiness: { 
+      isReady: boolean; 
+      description: string; 
+      additionalDetails?: string; 
+      desiredResolution?: string; 
+    } | null = null;
     console.log('Complaint details:', complaint);
 
     if (!complaint) {
@@ -150,7 +155,16 @@ export async function POST(request: Request) {
 
           if (complaintReadiness?.isReady) {
             try {
-              await submitComplaint({ id: complaintId });
+              const categoryPrediction = await predictComplaintCategory(uiMessages);
+              console.log('Category prediction:', categoryPrediction);
+              await submitComplaint({ 
+                id: complaintId, 
+                category: categoryPrediction?.category,
+                description: complaintReadiness.description,
+                additionalDetails: complaintReadiness.additionalDetails,
+                desiredResolution: complaintReadiness.desiredResolution,
+                sentiment: categoryPrediction?.sentiment
+              });
               complaint = await getComplaintById(complaintId);
               await updateChatIsDraft({ id, isDraft: false });
               console.log('Complaint submitted successfully:', complaintId);
@@ -168,6 +182,21 @@ export async function POST(request: Request) {
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
           system: `${customerComplaintPrompt}
+
+CURRENT DATE AND TIME CONTEXT:
+Current Date: ${new Date().toLocaleDateString('en-US', { 
+  weekday: 'long', 
+  year: 'numeric', 
+  month: 'long', 
+  day: 'numeric' 
+})}
+Current Time: ${new Date().toLocaleTimeString('en-US', { 
+  hour: '2-digit', 
+  minute: '2-digit',
+  timeZoneName: 'short'
+})}
+
+When customers mention relative dates like "yesterday", "last week", "two days ago", etc., calculate the actual date based on the current date above. Always convert relative dates to specific dates (e.g., "January 15, 2024") in your responses and complaint registration.
 
 IMPORTANT: Check if the complaint reference number is generated and provided below after the complaint submission. If it's not null then only tell the customer the reference number.
 Also check if the complaint is ready to submit. If the complaint readiness is not true yet, then do not show the reference number. Only show once both are truthy.
