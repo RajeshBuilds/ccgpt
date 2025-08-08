@@ -8,6 +8,7 @@ import {
 } from 'ai';
 import { auth } from '@/app/(auth)/auth';
 import {
+  assignComplaint,
   createStreamId,
   getChatById,
   getComplaintById,
@@ -31,11 +32,11 @@ import type { ChatModel } from '@/lib/ai/models';
 import { complaintResolverPrompt } from '@/lib/ai/prompts';
 import { generateTitleFromUserMessage } from '../../actions';
 import { fetchComplaintByRef } from '@/lib/ai/tools/complaint/fetch-complaint-by-ref';
-import { assignComplaint } from '@/lib/ai/tools/complaint/assign-complaint';
 import { updateCurrentComplaintDetails } from '@/lib/ai/tools/complaint/update-current-complaint-details';
 import { updateComplaintSummary } from '@/lib/ai/tools/complaint/update-complaint-summary';
 import { fetchComplaintsByAssignee } from '@/lib/ai/tools/complaint/fetch-complaints-by-assignee';
 import { fetchComplaintsWithNaturalLanguageQuery } from '@/lib/ai/tools/complaint/fetch-complaints-with-natural-language-query';
+import { assignComplaintToCurrentUser } from '@/lib/ai/tools/complaint/assign-complaint';
 
 
 export const maxDuration = 120;
@@ -96,12 +97,12 @@ export async function POST(request: Request) {
         message,
       });
 
-      await saveChat({
-        id,
-        userId: session.user.id,
-        userType: session.user.type,
-        title,
-      });
+      // await saveChat({
+      //   id,
+      //   userId: session.user.id,
+      //   userType: session.user.type,
+      //   title,
+      // });
     }
 
     const messagesFromDb = await getMessagesByChatId({ id });
@@ -157,7 +158,7 @@ Current user interacting with you is an employee responsible for resolving any c
           experimental_transform: smoothStream({ chunking: 'word' }),
           tools: {
             getComplaintDetailsById: fetchComplaintByRef,
-            assignToCurrentUser: assignComplaint,
+            assignToCurrentUser: assignComplaintToCurrentUser,
             updateCurrentComplaintDetails : updateCurrentComplaintDetails,
             updateComplaintSummary : updateComplaintSummary,
             fetchComplaintsByAssignee : fetchComplaintsByAssignee,

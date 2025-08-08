@@ -12,17 +12,13 @@ import {
   getChatById,
   getComplaintById,
   getMessagesByChatId,
-  saveChat,
-  saveComplaintDetails,
   saveMessages,
   submitComplaint,
+  updateChatTitle,
+  updateChatIsDraft,
 } from '@/lib/db/queries';
 import { convertToUIMessages, generateUUID } from '@/lib/utils';
-import { checkComplaintReadiness, generateTitleFromUserMessage } from '../../actions';
-import { createDocument } from '@/lib/ai/tools/create-document';
-import { updateDocument } from '@/lib/ai/tools/update-document';
-import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
-import { getWeather } from '@/lib/ai/tools/get-weather';
+import { assignComplaintToEmployee, checkComplaintReadiness, generateTitleFromUserMessage } from '../../actions';
 import { myProvider } from '@/lib/ai/providers';
 import { postRequestBodySchema, type PostRequestBody } from './schema';
 import {
@@ -100,19 +96,6 @@ export async function POST(request: Request) {
 
     const chat = await getChatById({ id });
 
-    if (!chat) {
-      const title = await generateTitleFromUserMessage({
-        message,
-      });
-
-      await saveChat({
-        id,
-        userId: session.user.id,
-        userType: session.user.type,
-        title,
-      });
-    }
-
     const messagesFromDb = await getMessagesByChatId({ id });
     const uiMessages = [...convertToUIMessages(messagesFromDb), message];
 
@@ -136,6 +119,28 @@ export async function POST(request: Request) {
     const stream = createUIMessageStream({
       execute: async ({ writer: dataStream }) => {
 
+        // Send title update event if title was updated
+        if (chat.title === 'New Chat') {
+          const title = await generateTitleFromUserMessage({
+            message,
+          });
+
+          console.log('Title generated:', title);
+
+          if (title) {
+            await updateChatTitle({
+              id,
+              title,
+            });
+  
+            // Send title update event to client
+            dataStream.write({
+              type: 'data-title',
+              data: title,
+            });
+          }
+        }
+
         // Only check readiness if the complaint is still a draft
         if (complaint && complaint.isDraft) {
           const complaintReadiness = await checkComplaintReadiness(complaintId, uiMessages);
@@ -144,7 +149,11 @@ export async function POST(request: Request) {
           if (complaintReadiness?.isReady) {
             try {
               await submitComplaint({ id: complaintId });
+              await updateChatIsDraft({ id, isDraft: false });
               console.log('Complaint submitted successfully:', complaintId);
+              console.log('Complaint details:', complaint);
+              console.log('Routing the complaint to the support team...');
+              assignComplaintToEmployee(complaintId);
             } catch (error) {
               console.error('Error submitting complaint:', error);
             }
@@ -222,3 +231,5 @@ Do not generate or make up any other reference numbers. Use only the provided re
     }
   }
 }
+
+

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllComplaints, getComplaintsAssignedToEmployee } from '@/lib/db/queries';
+import { getAllComplaints, getComplaintsAssignedToEmployeeA } from '@/lib/db/queries';
 
 export async function GET(request: Request) {
   try {
@@ -7,7 +7,7 @@ export async function GET(request: Request) {
     const employeeId = url.searchParams.get('employeeId');
     let complaints;
     if (employeeId) {
-      complaints = await getComplaintsAssignedToEmployee(Number(employeeId));
+      complaints = await getComplaintsAssignedToEmployeeA(Number(employeeId));
     } else {
       complaints = await getAllComplaints();
     }

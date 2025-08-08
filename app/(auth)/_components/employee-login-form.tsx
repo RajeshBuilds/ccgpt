@@ -46,9 +46,7 @@ export function EmployeeLoginForm({
         toast.error("Employee ID or password is incorrect");
       } else {
         toast.success('Signed in successfully');
-        const chatId = generateUUID();
-        sessionStorage.setItem('employee_chat_id', chatId);
-        router.push(`/employee/dashboard`);
+      router.push(`/dashboard`);
       }
     } catch (error) {
       console.error(error);
@@ -64,7 +62,7 @@ export function EmployeeLoginForm({
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Employee Login</CardTitle>
           <CardDescription>
-            Login with your Employee ID to access your dashboard and manage complaints.
+            Login with your Employee ID to access the Complaint Management Portal.
           </CardDescription>
         </CardHeader>
         <CardContent>

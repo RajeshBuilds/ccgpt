@@ -11,9 +11,10 @@ import type { ChatMessage } from '@/lib/types';
 interface CreateDocumentProps {
   session: Session;
   dataStream: UIMessageStreamWriter<ChatMessage>;
+  chatId: string;
 }
 
-export const createDocument = ({ session, dataStream }: CreateDocumentProps) =>
+export const createDocument = ({ session, dataStream, chatId }: CreateDocumentProps) =>
   tool({
     description:
       'Create a document for a writing or content creation activities. This tool will call other functions that will generate the contents of the document based on the title and kind.',
@@ -57,12 +58,13 @@ export const createDocument = ({ session, dataStream }: CreateDocumentProps) =>
         throw new Error(`No document handler found for kind: ${kind}`);
       }
 
-      // await documentHandler.onCreateDocument({
-      //   id,
-      //   title,
-      //   dataStream,
-      //   session,
-      // });
+      await documentHandler.onCreateDocument({
+        id,
+        title,
+        dataStream,
+        session,
+        chatId,
+      });
 
       dataStream.write({ type: 'data-finish', data: null, transient: true });
 

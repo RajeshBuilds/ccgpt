@@ -42,7 +42,9 @@ export function Chat({
   const { setDataStream } = useDataStream();
 
   const [input, setInput] = useState<string>('');
-  const isEmployeeLogin = session.user.type === 'employee';
+
+  const userType = session.user.type;
+  const apiUrl = userType === 'customer' ? '/api/chat' : '/api/ws';
 
   const {
     messages,
@@ -58,7 +60,7 @@ export function Chat({
     experimental_throttle: 100,
     generateId: generateUUID,
     transport: new DefaultChatTransport({
-      api: isEmployeeLogin? '/api/resolverchat' : '/api/chat',
+      api: apiUrl,
       fetch: fetchWithErrorHandlers,
       prepareSendMessagesRequest({ messages, id, body }) {
         return {

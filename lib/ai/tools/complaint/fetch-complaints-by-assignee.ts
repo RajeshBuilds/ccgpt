@@ -1,4 +1,4 @@
-import { getComplaintsAssignedToEmployee } from "@/lib/db/queries";
+import { getComplaintsAssignedToEmployeeA } from "@/lib/db/queries";
 import { tool } from "ai";
 import { z } from "zod";
 
@@ -9,7 +9,7 @@ export const fetchComplaintsByAssignee = tool({
   }),
   execute: async ({ assignee }) => {
     try {
-      const complaints = await getComplaintsAssignedToEmployee(assignee);
+      const complaints = await getComplaintsAssignedToEmployeeA(assignee);
       return {
         success: true,
         complaints,

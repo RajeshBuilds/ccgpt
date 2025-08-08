@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { NavMain } from "./nav-main"
@@ -37,6 +38,12 @@ const data = {
 
 export function SidebarCustomer({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession()
+  const router = useRouter()
+
+  const handleNewComplaint = () => {
+    const newChatId = generateUUID()
+    router.push(`/chat/${newChatId}`)
+  }
 
   return (
     <Sidebar {...props}>
@@ -49,7 +56,7 @@ export function SidebarCustomer({ ...props }: React.ComponentProps<typeof Sideba
                   <Landmark className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">XYZ Bank</span>
+                  <span className="truncate font-medium">Citibank</span>
                   <span className="truncate text-xs">Customer Support</span>
                 </div>
               </a>
@@ -58,16 +65,12 @@ export function SidebarCustomer({ ...props }: React.ComponentProps<typeof Sideba
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain complaints={data.complaints} />
-        <Separator />
         <ChatHistory customerId={session?.user?.id || 0} />
       </SidebarContent>
       <SidebarFooter>
         <div className="px-3 py-2">
-          <Button variant="default" size="sm" className="w-full" asChild>
-            <Link href={`/chat/${generateUUID()}`}>
-              New Complaint
-            </Link>
+          <Button variant="default" size="sm" className="w-full" onClick={handleNewComplaint}>
+            New Complaint
           </Button>
         </div>
         <Separator />

@@ -7,9 +7,11 @@ import {
   CreditCard,
   LogOut,
   Sparkles,
+  FileText
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useCallback } from "react"
+import { signOut } from "next-auth/react"
 
 import {
   Avatar,
@@ -40,27 +42,9 @@ export function NavUser({
     id: number
     name: string
     avatar: string
-    userType?: string // optional, for employee/customer distinction
   }
 }) {
   const { isMobile } = useSidebar()
-  const router = useRouter()
-
-  // Logout handler: clear sessionStorage and redirect
-  const handleLogout = useCallback(() => {
-    // Remove session user (if stored)
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('user');
-      sessionStorage.removeItem('userType');
-    }
-    // Redirect based on userType
-    const userType = user.userType || sessionStorage.getItem('userType');
-    if (userType === 'employee') {
-      router.replace('/login/employee');
-    } else {
-      router.replace('/login/customer');
-    }
-  }, [router, user.userType]);
 
   return (
     <SidebarMenu>
@@ -105,7 +89,22 @@ export function NavUser({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>
+            <DropdownMenuGroup>
+              <DropdownMenuItem>
+                <BadgeCheck />
+                Account
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <FileText />
+                Statements
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Bell />
+                Notifications
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => signOut({ redirectTo: '/' })}>
               <LogOut />
               Log out
             </DropdownMenuItem>
