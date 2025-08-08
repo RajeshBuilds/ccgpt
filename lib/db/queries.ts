@@ -818,7 +818,10 @@ export async function getComplaintsAssignedToEmployee({
     const complaintIds = assignments.map(assignment => assignment.complaintId);
 
     // Build where conditions for complaints
-    const whereConditions = [sql`${complaint.id} IN (${sql.join(complaintIds.map(id => sql`${id}`), sql`, `)})`];
+    const whereConditions = [
+      sql`${complaint.id} IN (${sql.join(complaintIds.map(id => sql`${id}`), sql`, `)})`,
+      eq(complaint.isDraft, false) // Only include submitted complaints
+    ];
     
     if (status && status !== 'all') {
       whereConditions.push(eq(complaint.status, status as any));
