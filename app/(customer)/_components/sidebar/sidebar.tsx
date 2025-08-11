@@ -56,7 +56,7 @@ export function SidebarCustomer({ ...props }: React.ComponentProps<typeof Sideba
                   <Landmark className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">XYZ Bank</span>
+                  <span className="truncate font-medium">Nexus Bank</span>
                   <span className="truncate text-xs">Customer Support</span>
                 </div>
               </a>

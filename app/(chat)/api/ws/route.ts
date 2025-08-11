@@ -30,10 +30,16 @@ import { ChatSDKError } from '@/lib/errors';
 import type { ChatMessage } from '@/lib/types';
 import type { ChatModel } from '@/lib/ai/models';
 import { artifactsPrompt, regularPrompt } from '@/lib/ai/prompts';
-import { registerComplaint } from '@/lib/ai/tools/complaint/register-complaint';
 import { createDocument } from '@/lib/ai/tools/create-document';
-import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 import { updateDocument } from '@/lib/ai/tools/update-document';
+import { complaintResolverPrompt } from '@/lib/ai/prompts';
+import { fetchComplaintsWithNaturalLanguageQuery } from '@/lib/ai/tools/complaint/fetch-complaints-with-natural-language-query';
+import { uploadComplaintSummaryToDatabase } from '@/lib/ai/tools/complaint/upload-complaint-summary-to-database';
+import { queryKnowledgeBase } from '@/lib/ai/tools/complaint/query-knowledge-base';
+import { updateComplaintStatus } from '@/lib/ai/tools/complaint/update-complaint-status';
+import { updateComplaintCategory } from '@/lib/ai/tools/complaint/update-complaint-category';
+import { getCustomerDetailsById } from '@/lib/ai/tools/complaint/get-customer-details-by-id';
+
 
 export const maxDuration = 120;
 
@@ -123,20 +129,85 @@ export async function POST(request: Request) {
       execute: async ({ writer: dataStream }) => {
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
-          system: `${regularPrompt}\n\n${artifactsPrompt}`,
+          system: `
+          Current user interacting with you is an employee responsible for resolving a particular complaint. 
+          
+          The user details are as follows:
+          - User ID: ${session.user.id}
+          - User Type: ${session.user.type}
+          - User Role: ${session.user.role}
+          - User Name: ${session.user.name}
+          - User Email: ${session.user.email}
+          - User Phone: ${session.user.phone}
+
+          Complaint details are as follows:
+           - id: ${complaint.id}
+           - reference_number: ${complaint.referenceNumber}
+          - customer_id: ${complaint.customerId}
+          - category: ${complaint.category}
+          - sub_category: ${complaint.subCategory}
+          - description: ${complaint.description}
+          - additional_details: ${complaint.additionalDetails}
+          - attachment_urls: ${complaint.attachmentUrls}
+          - desired_resolution: ${complaint.desiredResolution}
+          - sentiment: ${complaint.sentiment}
+          - urgency_level: ${complaint.urgencyLevel}
+          - assistant_notes: ${complaint.assistantNotes}
+          - assigned_to: ${complaint.assignedTo}
+          - is_draft: ${complaint.isDraft}
+          - status: ${complaint.status}
+          - resolution_notes: ${complaint.resolutionNotes}
+          - resolved_at: ${complaint.resolvedAt}
+          - created_at: ${complaint.createdAt}
+          - updated_at: ${complaint.updatedAt}
+          
+          your chat_id is ${id}, use this to retrieve the past conversation history & context.
+
+                    ${complaintResolverPrompt} 
+                   
+            
+          ## POINTS TO REMEMBER WHEN CLOSING / RESOLVING A COMPLAINT:  
+            - Create an elaborate summary of this complaint resolution based on the chat history. 
+            - AFTER GENERATING THE SUMMARY, SHOW THE COMPLAINT SUMMARY TO THE USER VIA ARTIFACT TOOLS LIKE  \`createDocument\` and \`updateDocument\` AND GET CONFIRMATION.
+            - ONLY UPON CONFIRMATION, upload the summary to the database using the \`uploadComplaintSummaryToDatabase\` tool.
+           
+            ##ARTIFACT DETAILS
+            ${artifactsPrompt}
+
+            ## STRUCTURE OF THE COMPLAINT RESOLUTION SUMMARY:
+            - The complaint summary with all complaint details.
+            - Investigation process starting with initial assessment till final analysis and gathered information.
+            - Steps taken to resolve the complaint.
+            
+            THE COMPLAINT IS CONSIDERED CLOSED ONLY WHEN THE USER CONFIRMS THE RESOLUTION SUMMARY.
+
+          `,
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
           experimental_activeTools:
             selectedChatModel === 'chat-model-reasoning'
               ? []
               : [
+                  'queryKnowledgeBase',
                   'createDocument',
                   'updateDocument',
+                  'fetchComplaintsWithNaturalLanguageQuery',
+                  'uploadComplaintSummaryToDatabase',
+                  'updateComplaintStatus',
+                  'updateComplaintCategory',
+                  'getCustomerDetails'
                 ],
           experimental_transform: smoothStream({ chunking: 'word' }),
                       tools: {
               createDocument: createDocument({ session, dataStream, chatId: id }),
               updateDocument: updateDocument({ session, dataStream }),
+              fetchComplaintsWithNaturalLanguageQuery : fetchComplaintsWithNaturalLanguageQuery,
+              uploadComplaintSummaryToDatabase: uploadComplaintSummaryToDatabase,
+              queryKnowledgeBase: queryKnowledgeBase,
+              updateComplaintStatus: updateComplaintStatus,
+              updateComplaintCategory:updateComplaintCategory,
+              getCustomerDetails:getCustomerDetailsById
+              
             },
           experimental_telemetry: {
             isEnabled: false,
