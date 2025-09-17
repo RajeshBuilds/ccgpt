@@ -67,28 +67,28 @@ export function SidebarEmployee({ ...props }: React.ComponentProps<typeof Sideba
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Assigned Tickets">
-                <Link href="/employee/assigned">
+                <Link href="#">
                   <span>Assigned</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="In Progress Tickets">
-                <Link href="/employee/in-progress">
+                <Link href="#">
                   <span>In Progress</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Escalated Tickets">
-                <Link href="/employee/escalated">
+                <Link href="#">
                   <span>Escalated</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Closed Tickets">
-                <Link href="/employee/closed">
+                <Link href="#">
                   <span>Closed</span>
                 </Link>
               </SidebarMenuButton>

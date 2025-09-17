@@ -56,8 +56,9 @@ export function Chat({
 
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('docType', 'resolution');
 
-    console.log('📤 Sending file to server...');
+    console.log('📤 Sending file to server with docType: resolution');
     const response = await fetch('/api/s3/upload', {
       method: 'POST',
       body: formData,

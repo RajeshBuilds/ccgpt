@@ -79,7 +79,7 @@ export function CategoriesNav() {
         {categories.map((category) => (
           <SidebarMenuItem key={category.id}>
             <SidebarMenuButton asChild tooltip={category.name}>
-              <Link href={`/employee/category/${category.id}`}>
+              <Link href="#">
                 <span>{category.name}</span>
               </Link>
             </SidebarMenuButton>

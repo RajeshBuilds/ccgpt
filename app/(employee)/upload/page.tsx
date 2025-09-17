@@ -25,6 +25,9 @@ export default function UploadPage() {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Fixed docType for upload page - always 'policy'
+  const docType = 'policy';
 
   console.log('🚀 UploadPage component rendered');
 
@@ -76,8 +79,9 @@ export default function UploadPage() {
 
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('docType', docType);
 
-    console.log('📤 Sending file to server...');
+    console.log('📤 Sending file to server with docType:', docType);
     const response = await fetch('/api/s3/upload', {
       method: 'POST',
       body: formData,
