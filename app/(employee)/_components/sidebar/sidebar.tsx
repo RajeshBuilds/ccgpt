@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useSession } from "next-auth/react"
+import { useRouter } from 'next/navigation';
 
 import { NavUser } from "./nav-user"
 import { SidebarHeaderMenu } from "./sidebar-header-menu"
@@ -21,13 +22,17 @@ import {
 import Link from "next/link"
 import { Home } from "lucide-react"
 import { usePathname } from "next/navigation"
+import { UploadIcon } from '@/components/icons';
 
 export function SidebarEmployee({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession()
   const pathname = usePathname()
+  const router = useRouter();
 
   return (
-    <Sidebar {...props}>
+    <Sidebar {...props}
+    className="bg-gradient-to-b from-zinc-100 via-white to-zinc-200 dark:from-zinc-900 dark:via-zinc-950 dark:to-zinc-900 border-r border-zinc-200 dark:border-zinc-800 rounded-r-2xl shadow-xl min-h-screen flex flex-col"
+    >
       <SidebarHeader>
         <SidebarHeaderMenu />
       </SidebarHeader>
@@ -40,6 +45,18 @@ export function SidebarEmployee({ ...props }: React.ComponentProps<typeof Sideba
                   <Home />
                   <span>Dashboard</span>
                 </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <button
+                  type="button"
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-muted transition-colors"
+                  onClick={() => router.push('/upload')}
+                >
+                  <UploadIcon />
+                  <span>Update KB</span>
+                </button>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

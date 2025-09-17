@@ -5,6 +5,7 @@ import { db } from "./drizzle";
 import { chat, Chat, complaint, complaintAssignment, complaintCategory, complaintSubCategory, Customer, customer, document, employee, Employee, Message, message, stream, suggestion, Suggestion, workspace, Workspace } from "./schema";
 import { UserType } from "@/app/(auth)/auth";
 import { ArtifactKind } from "@/components/artifact";
+import { stat } from "fs";
 
 // ===================================== Customer =====================================
 export async function getCustomer(id: number): Promise<Array<Customer>> {
@@ -536,7 +537,7 @@ export async function submitComplaint({
   }
 }
 
-export async function assignComplaintToEmployee({
+export async function assignComplaintToEmployeeById({
   complaintId,
   employeeId,
 }: {
@@ -940,4 +941,112 @@ export async function createWorkspace({
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to create workspace');
   }
+}
+
+// fetch data with custom query
+export async function fetchComplaintsWithQuery(query: string) {
+  try {
+    console.log('Query executed:', query);
+    const result = (await db.execute(query.trim())).rows.map(row => mapRowToComplaint(row));
+    console.log('Result:', result);
+    return result;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to fetch data with custom query');
+  }
+}
+
+function mapRowToComplaint(row: any) {
+  return {
+    id: row.id,
+    referenceNumber: row.reference_number,
+    chatId: row.chat_id,
+    customerId: row.customer_id,
+    category: row.category,
+    subCategory: row.sub_category,
+    description: row.description,
+    additionalDetails: row.additional_details,
+    attachmentUrls: row.attachment_urls,
+    desiredResolution: row.desired_resolution,
+    sentiment: row.sentiment,
+    urgencyLevel: row.urgency_level,
+    assistantNotes: row.assistant_notes,
+    assignedTo: row.assigned_to,
+    isDraft: row.is_draft,
+    status: row.status,
+    resolutionNotes: row.resolution_notes,
+    resolvedAt: row.resolved_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+/**
+ * Updates the status, resolution notes, and resolvedAt fields of a complaint.
+ * If status is 'resolved', also updates the complaintAssignment table for the complaint.
+ * @param complaintId - The ID of the complaint to update
+ * @param resolutionNotes - The resolution notes to set
+ * @param resolvedAt - The timestamp when the complaint was resolved
+ * @param status - The new status for the complaint
+ */
+export async function updateComplaintStatusById({
+  complaintId,
+  status,
+  resolutionNotes,
+}: {
+  complaintId: string;
+  status: 'open' | 'assigned' | 'in_progress' | 'closed' | 'escalated';
+  resolutionNotes?: string;
+}) {
+  const now = new Date();
+  // Build update object
+  const updateObj: any = {
+    resolvedAt: now,
+    status,
+  };
+  if (typeof resolutionNotes !== 'undefined' && status === 'closed') {
+    updateObj.resolutionNotes = resolutionNotes;
+  }
+  // Update complaint table
+  await db.update(complaint)
+    .set(updateObj)
+    .where(eq(complaint.id, complaintId));
+
+  // If status is 'closed', update complaintAssignment as well
+  if (status === 'closed') {
+    await db.update(complaintAssignment)
+      .set({
+        assignedAt: now,
+        assignmentStatus: 'closed',
+      })
+      .where(eq(complaintAssignment.complaintId, complaintId));
+  }
+}
+
+/**
+ * Updates the category and subCategory fields of a complaint by its ID.
+ * @param complaintId - The ID of the complaint to update
+ * @param category - The new category value
+ * @param subCategory - The new subCategory value
+ */
+export async function updateComplaintCategoryById({
+  complaintId,
+  category,
+  subCategory,
+}: {
+  complaintId: string;
+  category?: string;
+  subCategory?: string;
+}) {
+  // Build update object only with non-empty fields
+  const updateObj: Record<string, string> = {};
+  if (category && category.trim() !== '') {
+    updateObj.category = category;
+  }
+  if (subCategory && subCategory.trim() !== '') {
+    updateObj.subCategory = subCategory;
+  }
+  if (Object.keys(updateObj).length === 0) return; // Nothing to update
+  await db.update(complaint)
+    .set(updateObj)
+    .where(eq(complaint.id, complaintId));
 }
